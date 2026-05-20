@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Asistencia Docente - I.E. N°80918 "San Juan Bautista" - 2026</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Iconos modernos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Fuente Google -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- ==================== HEADER ==================== -->
+    <header class="main-header">
+        <div class="header-overlay"></div>
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="fas fa-school"></i>
+            </div>
+            <h1>CONTROL DE ASISTENCIA DOCENTE</h1>
+            <h2>I.E. N°80918 "SAN JUAN BAUTISTA" - 2026</h2>
+            <div class="header-badge">
+                <i class="fas fa-clipboard-check"></i>
+                <span>Registro Oficial</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== FORMULARIO PRINCIPAL ==================== -->
+    <main class="main-container">
+        <div class="form-card" id="formCard">
+            <div class="form-header">
+                <div class="form-header-bar"></div>
+                <h3><i class="fas fa-user-check"></i> DATOS GENERALES</h3>
+                <p>Complete todos los campos requeridos para registrar su asistencia</p>
+            </div>
+
+            <form id="attendanceForm" novalidate>
+
+                <!-- FECHA -->
+                <div class="form-group">
+                    <label class="form-label" for="fecha">
+                        <i class="fas fa-calendar-alt"></i> FECHA <span class="required">*</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="date" id="fecha" name="fecha" required>
+                        <i class="fas fa-calendar input-icon"></i>
+                    </div>
+                    <span class="error-msg" id="fechaError"></span>
+                </div>
+
+                <!-- HORA (automática) -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-clock"></i> HORA <span class="required">*</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="text" id="hora" name="hora" readonly placeholder="Se registrará automáticamente">
+                        <i class="fas fa-clock input-icon"></i>
+                    </div>
+                    <span class="info-text"><i class="fas fa-info-circle"></i> La hora se captura automáticamente al enviar</span>
+                </div>
+
+                <!-- TEMA -->
+                <div class="form-group">
+                    <label class="form-label" for="tema">
+                        <i class="fas fa-book-open"></i> TEMA A TRATAR <span class="required">*</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="text" id="tema" name="tema" required maxlength="150" placeholder="Ingrese el tema de la reunión o actividad">
+                        <i class="fas fa-book-open input-icon"></i>
+                    </div>
+                    <span class="error-msg" id="temaError"></span>
+                </div>
+
+                <!-- NOMBRE COMPLETO -->
+                <div class="form-group">
+                    <label class="form-label" for="nombre">
+                        <i class="fas fa-user"></i> APELLIDOS Y NOMBRES <span class="required">*</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="text" id="nombre" name="nombre" required maxlength="100" placeholder="Ingrese sus apellidos y nombres completos">
+                        <i class="fas fa-user input-icon"></i>
+                    </div>
+                    <span class="error-msg" id="nombreError"></span>
+                </div>
+
+                <!-- DNI -->
+                <div class="form-group">
+                    <label class="form-label" for="dni">
+                        <i class="fas fa-id-card"></i> DNI <span class="required">*</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="text" id="dni" name="dni" required maxlength="8" placeholder="Ingrese su DNI (8 dígitos)" pattern="[0-9]{8}" inputmode="numeric">
+                        <i class="fas fa-id-card input-icon"></i>
+                    </div>
+                    <span class="error-msg" id="dniError"></span>
+                </div>
+
+                <!-- NIVEL (CON CAMPO OTROS) -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-layer-group"></i> NIVEL <span class="required">*</span>
+                    </label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="nivel" value="INICIAL">
+                            <span class="checkmark"><i class="fas fa-baby"></i></span>
+                            <span class="label-text">INICIAL</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="nivel" value="PRIMARIA">
+                            <span class="checkmark"><i class="fas fa-child"></i></span>
+                            <span class="label-text">PRIMARIA</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="nivel" value="SECUNDARIA">
+                            <span class="checkmark"><i class="fas fa-user-graduate"></i></span>
+                            <span class="label-text">SECUNDARIA</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="nivel" value="OTROS" id="checkOtros">
+                            <span class="checkmark"><i class="fas fa-chalkboard-teacher"></i></span>
+                            <span class="label-text">OTROS</span>
+                        </label>
+                    </div>
+                    
+                    <!-- Campo de texto para OTROS (oculto por defecto) -->
+                    <div class="otros-input-wrapper hidden" id="otrosWrapper">
+                        <div class="input-wrapper" style="margin-top: 0.75rem;">
+                            <input type="text" id="otrosNivel" name="otrosNivel" maxlength="50" placeholder="Especifique el nivel (ej: SUPERIOR, TÉCNICO)">
+                            <i class="fas fa-edit input-icon"></i>
+                        </div>
+                        <span class="error-msg" id="otrosError"></span>
+                    </div>
+                    
+                    <span class="error-msg" id="nivelError"></span>
+                </div>
+
+                <!-- BOTÓN ENVIAR -->
+                <div class="form-actions">
+                    <button type="submit" id="btnSubmit" class="btn-primary">
+                        <i class="fas fa-paper-plane"></i>
+                        <span>REGISTRAR ASISTENCIA</span>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- ==================== MENSAJE DE ÉXITO ==================== -->
+        <div class="success-card hidden" id="successCard">
+            <div class="success-animation">
+                <div class="success-circle">
+                    <i class="fas fa-check"></i>
+                </div>
+            </div>
+            <h3>¡Asistencia registrada correctamente!</h3>
+            <p>Su registro ha sido guardado exitosamente en el sistema.</p>
+            <div class="success-details" id="successDetails"></div>
+            <button class="btn-secondary" onclick="resetForm()">
+                <i class="fas fa-plus"></i> Registrar otra asistencia
+            </button>
+        </div>
+
+        <!-- ==================== MENSAJE DE ERROR ==================== -->
+        <div class="error-card hidden" id="errorCard">
+            <div class="error-animation">
+                <div class="error-circle">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+            </div>
+            <h3>No se pudo registrar</h3>
+            <p id="errorMessage"></p>
+            <button class="btn-secondary" onclick="resetForm()">
+                <i class="fas fa-redo"></i> Intentar nuevamente
+            </button>
+        </div>
+    </main>
+
+    <!-- ==================== BOTÓN ACCESO ADMIN ==================== -->
+    <button class="admin-toggle" id="adminToggle" title="Panel de Administrador">
+        <i class="fas fa-cog"></i>
+    </button>
+
+    <!-- ==================== MODAL LOGIN ADMIN ==================== -->
+    <div class="modal-overlay hidden" id="loginModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fas fa-shield-alt"></i> Acceso Administrador</h3>
+                <button class="modal-close" onclick="closeLoginModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="adminUser">
+                        <i class="fas fa-user-shield"></i> Usuario
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="text" id="adminUser" required placeholder="Ingrese usuario">
+                        <i class="fas fa-user-shield input-icon"></i>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="adminPass">
+                        <i class="fas fa-lock"></i> Contraseña
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="password" id="adminPass" required placeholder="Ingrese contraseña">
+                        <i class="fas fa-lock input-icon"></i>
+                        <button type="button" class="toggle-pass" onclick="togglePassword()">
+                            <i class="fas fa-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+                <span class="error-msg" id="loginError"></span>
+                <button type="submit" class="btn-primary btn-full">
+                    <i class="fas fa-sign-in-alt"></i> Ingresar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== PANEL DE ADMINISTRADOR ==================== -->
+    <div class="modal-overlay hidden" id="adminPanel">
+        <div class="admin-panel-card">
+            <div class="admin-header">
+                <div>
+                    <h3><i class="fas fa-chart-bar"></i> Panel de Administración</h3>
+                    <p>Gestión de registros de asistencia</p>
+                </div>
+                <button class="btn-logout" onclick="closeAdminPanel()">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </button>
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number" id="totalRegistros">0</span>
+                        <span class="stat-label">Total Registros</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number" id="totalHoy">0</span>
+                        <span class="stat-label">Registros Hoy</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <i class="fas fa-chalkboard"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number" id="totalNiveles">0</span>
+                        <span class="stat-label">Niveles Activos</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="filters-bar">
+                <div class="filter-group">
+                    <label><i class="fas fa-search"></i> Buscar docente:</label>
+                    <input type="text" id="searchInput" placeholder="Nombre o DNI...">
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-filter"></i> Filtrar por fecha:</label>
+                    <input type="date" id="filterDate">
+                </div>
+                <div class="filter-actions">
+                    <button class="btn-filter" onclick="filterRecords()">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                    <button class="btn-filter btn-reset" onclick="resetFilters()">
+                        <i class="fas fa-undo"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="admin-actions">
+                <button class="btn-action" onclick="downloadExcel()">
+                    <i class="fas fa-file-excel"></i> Descargar Excel
+                </button>
+                <button class="btn-action" onclick="printReport()">
+                    <i class="fas fa-print"></i> Imprimir Reporte
+                </button>
+                <button class="btn-action btn-refresh" onclick="loadRecords()">
+                    <i class="fas fa-sync-alt"></i> Actualizar
+                </button>
+            </div>
+
+            <!-- Tabla de registros -->
+            <div class="table-container">
+                <table id="recordsTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Tema</th>
+                            <th>Docente</th>
+                            <th>DNI</th>
+                            <th>Nivel</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recordsBody">
+                        <tr>
+                            <td colspan="7" class="loading-row">
+                                <i class="fas fa-spinner fa-spin"></i> Cargando registros...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-footer">
+                <span id="recordsCount">0 registros encontrados</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOADING OVERLAY -->
+    <div class="loading-overlay hidden" id="loadingOverlay">
+        <div class="spinner">
+            <i class="fas fa-circle-notch fa-spin"></i>
+            <p>Registrando asistencia...</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
