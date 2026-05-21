@@ -28,11 +28,13 @@
 
     <!-- ==================== FORMULARIO PRINCIPAL ==================== -->
     <main class="main-container">
+        
+        <!-- TARJETA 1: REGISTRO DE ENTRADA -->
         <div class="form-card" id="formCard">
             <div class="form-header">
                 <div class="form-header-bar"></div>
-                <h3><i class="fas fa-user-check"></i> DATOS GENERALES</h3>
-                <p>Complete todos los campos requeridos para registrar su asistencia</p>
+                <h3><i class="fas fa-sign-in-alt"></i> REGISTRO DE ENTRADA</h3>
+                <p>Complete todos los campos para registrar su ingreso</p>
             </div>
 
             <form id="attendanceForm" novalidate>
@@ -47,35 +49,6 @@
                         <i class="fas fa-calendar input-icon"></i>
                     </div>
                     <span class="error-msg" id="fechaError"></span>
-                </div>
-
-                <!-- HORA ENTRADA (automática) -->
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-sign-in-alt"></i> HORA DE ENTRADA <span class="required">*</span>
-                    </label>
-                    <div class="input-wrapper">
-                        <input type="text" id="horaEntrada" name="horaEntrada" readonly placeholder="Se registrará automáticamente">
-                        <i class="fas fa-clock input-icon"></i>
-                    </div>
-                    <span class="info-text"><i class="fas fa-info-circle"></i> Se captura al presionar "Registrar"</span>
-                </div>
-
-                <!-- HORA SALIDA (Botón) -->
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-sign-out-alt"></i> HORA DE SALIDA
-                    </label>
-                    <div class="exit-time-wrapper">
-                        <div class="input-wrapper">
-                            <input type="text" id="horaSalida" name="horaSalida" readonly placeholder="Presione el botón para registrar">
-                            <i class="fas fa-clock input-icon"></i>
-                        </div>
-                        <button type="button" class="btn-exit-time" onclick="captureExitTime()">
-                            <i class="fas fa-stopwatch"></i> Registrar Salida
-                        </button>
-                    </div>
-                    <span class="info-text"><i class="fas fa-info-circle"></i> Registre su hora de salida al finalizar la jornada</span>
                 </div>
 
                 <!-- TEMA -->
@@ -114,7 +87,7 @@
                     <span class="error-msg" id="dniError"></span>
                 </div>
 
-                <!-- NIVEL (CON CAMPO OTROS) -->
+                <!-- NIVEL -->
                 <div class="form-group">
                     <label class="form-label">
                         <i class="fas fa-layer-group"></i> NIVEL <span class="required">*</span>
@@ -142,10 +115,9 @@
                         </label>
                     </div>
                     
-                    <!-- Campo de texto para OTROS (oculto por defecto) -->
                     <div class="otros-input-wrapper hidden" id="otrosWrapper">
                         <div class="input-wrapper" style="margin-top: 0.75rem;">
-                            <input type="text" id="otrosNivel" name="otrosNivel" maxlength="50" placeholder="Especifique el nivel (ej: SUPERIOR, TÉCNICO)">
+                            <input type="text" id="otrosNivel" name="otrosNivel" maxlength="50" placeholder="Especifique el nivel">
                             <i class="fas fa-edit input-icon"></i>
                         </div>
                         <span class="error-msg" id="otrosError"></span>
@@ -158,10 +130,46 @@
                 <div class="form-actions">
                     <button type="submit" id="btnSubmit" class="btn-primary">
                         <i class="fas fa-paper-plane"></i>
-                        <span>REGISTRAR ASISTENCIA</span>
+                        <span>REGISTRAR ENTRADA</span>
                     </button>
                 </div>
 
+            </form>
+        </div>
+
+        <!-- TARJETA 2: REGISTRO DE SALIDA (SIMPLIFICADO) -->
+        <div class="form-card exit-card" id="exitCard">
+            <div class="form-header exit-header">
+                <div class="form-header-bar"></div>
+                <h3><i class="fas fa-sign-out-alt"></i> REGISTRO DE SALIDA</h3>
+                <p>Ingrese solo su DNI para registrar su salida</p>
+            </div>
+
+            <form id="exitForm" novalidate>
+                <!-- DNI PARA SALIDA -->
+                <div class="form-group">
+                    <label class="form-label" for="dniSalida">
+                        <i class="fas fa-id-card"></i> DNI DEL DOCENTE <span class="required">*</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="text" id="dniSalida" name="dniSalida" required maxlength="8" placeholder="Ingrese su DNI (8 dígitos)" pattern="[0-9]{8}" inputmode="numeric">
+                        <i class="fas fa-id-card input-icon"></i>
+                    </div>
+                    <span class="error-msg" id="dniSalidaError"></span>
+                </div>
+
+                <!-- BOTÓN REGISTRAR SALIDA -->
+                <div class="form-actions">
+                    <button type="submit" class="btn-exit">
+                        <i class="fas fa-stopwatch"></i>
+                        <span>REGISTRAR SALIDA</span>
+                    </button>
+                </div>
+
+                <div class="exit-info">
+                    <i class="fas fa-info-circle"></i>
+                    <p>El sistema buscará su registro de entrada y agregará automáticamente la hora de salida</p>
+                </div>
             </form>
         </div>
 
@@ -172,11 +180,11 @@
                     <i class="fas fa-check"></i>
                 </div>
             </div>
-            <h3>¡Asistencia registrada correctamente!</h3>
-            <p>Su registro ha sido guardado exitosamente en el sistema.</p>
+            <h3>¡Registro exitoso!</h3>
+            <p id="successMessage">Su registro ha sido guardado correctamente.</p>
             <div class="success-details" id="successDetails"></div>
-            <button class="btn-secondary" onclick="resetForm()">
-                <i class="fas fa-plus"></i> Nuevo registro
+            <button class="btn-secondary" onclick="resetForms()">
+                <i class="fas fa-redo"></i> Volver al inicio
             </button>
         </div>
 
@@ -189,7 +197,7 @@
             </div>
             <h3>No se pudo registrar</h3>
             <p id="errorMessage"></p>
-            <button class="btn-secondary" onclick="resetForm()">
+            <button class="btn-secondary" onclick="resetForms()">
                 <i class="fas fa-redo"></i> Intentar nuevamente
             </button>
         </div>
@@ -252,7 +260,7 @@
                 </button>
             </div>
 
-            <!-- Control de Acceso al Formulario -->
+            <!-- Control de Acceso -->
             <div class="access-control">
                 <div class="access-toggle">
                     <span class="access-label">
@@ -264,7 +272,7 @@
                     </label>
                     <span class="access-status" id="accessStatus">🟢 ACTIVO</span>
                 </div>
-                <p class="access-help"><i class="fas fa-info-circle"></i> Cuando está desactivado, los docentes no podrán registrar asistencia</p>
+                <p class="access-help"><i class="fas fa-info-circle"></i> Cuando está desactivado, los docentes no podrán registrar</p>
             </div>
 
             <!-- Estadísticas -->
@@ -331,7 +339,7 @@
                 </button>
             </div>
 
-            <!-- Tabla de registros -->
+            <!-- Tabla -->
             <div class="table-container">
                 <table id="recordsTable">
                     <thead>
@@ -366,7 +374,7 @@
     <div class="loading-overlay hidden" id="loadingOverlay">
         <div class="spinner">
             <i class="fas fa-circle-notch fa-spin"></i>
-            <p>Registrando asistencia...</p>
+            <p>Procesando...</p>
         </div>
     </div>
 
