@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Control de Asistencia Docente - I.E. N°80918 "San Juan Bautista" - 2026</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Iconos modernos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Fuente Google -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -51,16 +49,33 @@
                     <span class="error-msg" id="fechaError"></span>
                 </div>
 
-                <!-- HORA (automática) -->
+                <!-- HORA ENTRADA (automática) -->
                 <div class="form-group">
                     <label class="form-label">
-                        <i class="fas fa-clock"></i> HORA <span class="required">*</span>
+                        <i class="fas fa-sign-in-alt"></i> HORA DE ENTRADA <span class="required">*</span>
                     </label>
                     <div class="input-wrapper">
-                        <input type="text" id="hora" name="hora" readonly placeholder="Se registrará automáticamente">
+                        <input type="text" id="horaEntrada" name="horaEntrada" readonly placeholder="Se registrará automáticamente al enviar">
                         <i class="fas fa-clock input-icon"></i>
                     </div>
-                    <span class="info-text"><i class="fas fa-info-circle"></i> La hora se captura automáticamente al enviar</span>
+                    <span class="info-text"><i class="fas fa-info-circle"></i> Se captura automáticamente al presionar "Registrar"</span>
+                </div>
+
+                <!-- HORA SALIDA (Botón) -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-sign-out-alt"></i> HORA DE SALIDA
+                    </label>
+                    <div class="exit-time-wrapper">
+                        <div class="input-wrapper">
+                            <input type="text" id="horaSalida" name="horaSalida" readonly placeholder="Presione el botón para registrar">
+                            <i class="fas fa-clock input-icon"></i>
+                        </div>
+                        <button type="button" class="btn-exit-time" onclick="captureExitTime()">
+                            <i class="fas fa-stopwatch"></i> Registrar Salida
+                        </button>
+                    </div>
+                    <span class="info-text"><i class="fas fa-info-circle"></i> Opcional. Registra el momento exacto de su salida</span>
                 </div>
 
                 <!-- TEMA -->
@@ -237,6 +252,21 @@
                 </button>
             </div>
 
+            <!-- Control de Acceso al Formulario -->
+            <div class="access-control">
+                <div class="access-toggle">
+                    <span class="access-label">
+                        <i class="fas fa-lock"></i> Estado del Formulario:
+                    </span>
+                    <label class="switch">
+                        <input type="checkbox" id="formAccessToggle" onchange="toggleFormAccess()">
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="access-status" id="accessStatus">🟢 ACTIVO</span>
+                </div>
+                <p class="access-help"><i class="fas fa-info-circle"></i> Cuando está desactivado, los docentes no podrán registrar asistencia</p>
+            </div>
+
             <!-- Estadísticas -->
             <div class="stats-grid">
                 <div class="stat-card">
@@ -308,7 +338,8 @@
                         <tr>
                             <th>#</th>
                             <th>Fecha</th>
-                            <th>Hora</th>
+                            <th>Entrada</th>
+                            <th>Salida</th>
                             <th>Tema</th>
                             <th>Docente</th>
                             <th>DNI</th>
@@ -317,7 +348,7 @@
                     </thead>
                     <tbody id="recordsBody">
                         <tr>
-                            <td colspan="7" class="loading-row">
+                            <td colspan="8" class="loading-row">
                                 <i class="fas fa-spinner fa-spin"></i> Cargando registros...
                             </td>
                         </tr>
