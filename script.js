@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     unlockAllFields();
-    checkSystemStatus();
+    checkSystemStatus(); // Verifica estado inicial
     setupForm();
     setupLogin();
     
@@ -36,34 +36,44 @@ document.addEventListener('DOMContentLoaded', () => {
    VERIFICAR ESTADO DEL SISTEMA
    ========================================== */
 function checkSystemStatus() {
-    const isActive = getManualAccess();
+    const manualActive = getManualAccess(); // Lo que dice tu botón
     const hour = new Date().getHours();
-    const isTimeOk = hour >= 8 && hour < 17;
+    const isTimeOk = hour >= 8 && hour < 17; // Horario
     
     const btnSubmit = document.getElementById('btnSubmit');
     const btnToggle = document.getElementById('btnToggleExit');
     
-    if (!isActive || !isTimeOk) {
-        if (btnSubmit) btnSubmit.disabled = true;
-        if (btnToggle) btnToggle.disabled = true;
-        showClosedMessage(isActive, isTimeOk);
-    } else {
+    // El sistema está activo SOLO si el botón está ON Y es horario
+    const systemActive = manualActive && isTimeOk;
+    
+    if (systemActive) {
         if (btnSubmit) btnSubmit.disabled = false;
         if (btnToggle) btnToggle.disabled = false;
         hideClosedMessage();
+    } else {
+        if (btnSubmit) btnSubmit.disabled = true;
+        if (btnToggle) btnToggle.disabled = true;
+        
+        // Mostrar mensaje de por qué está cerrado
+        if (!isTimeOk) {
+            showClosedMessage(false, false); // Fuera de horario
+        } else {
+            showClosedMessage(false, true); // Desactivado por admin
+        }
     }
     
-    updateAccessIndicator(isActive && isTimeOk);
+    // Actualizar visualmente el indicador y el botón
+    updateAccessIndicator(manualActive);
 }
 
-function showClosedMessage(isActive, isTimeOk) {
+function showClosedMessage(isAdminDisabled, isTimeDisabled) {
     document.getElementById('formCard').classList.add('hidden');
     document.getElementById('closedCard').classList.remove('hidden');
     
     const messageEl = document.getElementById('closedMessage');
-    if (!isTimeOk) {
-        messageEl.innerHTML = '⏰ <strong>Fuera del Horario de Atención</strong><br>El sistema solo está disponible en horario laboral.';
-    } else if (!isActive) {
+    if (isTimeDisabled) {
+        messageEl.innerHTML = '⏰ <strong>Fuera del Horario de Atención</strong><br>El sistema solo está disponible de 8:00 a.m. a 5:00 p.m.';
+    } else {
         messageEl.innerHTML = '🔒 <strong>Sistema Desactivado</strong><br>El administrador ha desactivado temporalmente el registro.';
     }
 }
@@ -74,7 +84,58 @@ function hideClosedMessage() {
 }
 
 /* ==========================================
-   BLOQUEAR/DESBLOQUEAR CAMPOS
+   ✅ CORRECCIÓN: CONTROL DE ACCESO MANUAL
+   ========================================== */
+function getManualAccess() {
+    // Lee lo que el administrador configuró manualmente
+    return localStorage.getItem('form_enabled') !== 'false';
+}
+
+function updateAccessIndicator(isActive) {
+    const statusEl = document.getElementById('accessStatus');
+    const toggleEl = document.getElementById('formAccessToggle');
+    
+    // Actualiza el texto del estado
+    if (statusEl) {
+        if (isActive) {
+            statusEl.innerHTML = '<i class="fas fa-circle"></i> ACTIVO';
+            statusEl.className = 'access-status active';
+        } else {
+            statusEl.innerHTML = '<i class="fas fa-circle"></i> BLOQUEADO';
+            statusEl.className = 'access-status inactive';
+        }
+    }
+    
+    // Mueve el interruptor a la posición correcta según localStorage
+    if (toggleEl) {
+        toggleEl.checked = isActive;
+    }
+}
+
+function toggleFormAccess() {
+    const check = document.getElementById('formAccessToggle');
+    if (check) {
+        // Guardamos el nuevo estado del botón
+        const newState = check.checked;
+        localStorage.setItem('form_enabled', newState);
+        
+        // Actualizamos la interfaz inmediatamente
+        updateAccessIndicator(newState);
+        
+        // Verificamos si el sistema debe funcionar ahora
+        checkSystemStatus();
+        
+        // Mensaje de confirmación
+        if (newState) {
+            alert('✅ Formulario ACTIVADO manualmente.\n\nLos docentes podrán registrar si están en horario (8:00 a.m. - 5:00 p.m.).');
+        } else {
+            alert('🔒 Formulario DESACTIVADO manualmente.\n\nLos docentes NO podrán registrar bajo ninguna circunstancia.');
+        }
+    }
+}
+
+/* ==========================================
+   BLOQUEAR/DESBLOQUEAR CAMPOS (Entrada/Salida)
    ========================================== */
 function lockPersonalFields() {
     const container = document.getElementById('personalDataContainer');
@@ -204,7 +265,7 @@ function toggleExitMode() {
 }
 
 /* ==========================================
-   FORMULARIO - CON VALIDACIÓN DE SALIDA DUPLICADA
+   FORMULARIO (Validación de Salida Duplicada)
    ========================================== */
 function setupForm() {
     const form = document.getElementById('attendanceForm');
@@ -219,7 +280,7 @@ function setupForm() {
         const isTimeOk = hour >= 8 && hour < 17;
         
         if (!isActive || !isTimeOk) {
-            showClosedMessage(isActive, isTimeOk);
+            showClosedMessage(!isActive, !isTimeOk);
             return;
         }
         
@@ -236,7 +297,7 @@ function setupForm() {
         showLoading(true);
         
         if (isExitMode) {
-            // MODO SALIDA - CON VALIDACIÓN DE DUPLICADO
+            // MODO SALIDA
             const existingIndex = allRecords.findIndex(r => r.dni === dni && r.fecha === fecha);
             
             if (existingIndex === -1) {
@@ -419,52 +480,6 @@ function showLoading(show) {
 }
 
 /* ==========================================
-   CONTROL DE ACCESO ADMIN
-   ========================================== */
-function getManualAccess() {
-    const access = localStorage.getItem('form_enabled');
-    return access !== 'false';
-}
-
-function updateAccessIndicator(isActive) {
-    const statusEl = document.getElementById('accessStatus');
-    const toggleEl = document.getElementById('formAccessToggle');
-    
-    if (statusEl) {
-        if (isActive) {
-            statusEl.innerHTML = '<i class="fas fa-circle"></i> ACTIVO';
-            statusEl.className = 'access-status active';
-        } else {
-            statusEl.innerHTML = '<i class="fas fa-circle"></i> BLOQUEADO';
-            statusEl.className = 'access-status inactive';
-        }
-    }
-    
-    if (toggleEl) toggleEl.checked = isActive;
-}
-
-function toggleFormAccess() {
-    const check = document.getElementById('formAccessToggle');
-    if (check) {
-        const newState = check.checked;
-        localStorage.setItem('form_enabled', newState);
-        
-        const hour = new Date().getHours();
-        const isTimeOk = hour >= 8 && hour < 17;
-        const finalState = newState && isTimeOk;
-        
-        updateAccessIndicator(finalState);
-        checkSystemStatus();
-        
-        if (newState) {
-            alert('✅ Formulario ACTIVADO\n\nLos docentes pueden registrar asistencia.\n\nHorario: 8:00 a.m. - 5:00 p.m.');
-        } else {
-            alert('🔒 Formulario DESACTIVADO\n\nLos docentes NO pueden registrar.\n\nMensaje mostrado: Sistema temporalmente cerrado');
-        }
-    }
-}
-
-/* ==========================================
    ADMIN PANEL FUNCIONES
    ========================================== */
 function setupLogin() {
@@ -528,10 +543,8 @@ function loadRecordsForAdmin() {
     const nivelesEl = document.getElementById('totalNiveles');
     if (nivelesEl) nivelesEl.textContent = niveles.size;
     
-    const hour = new Date().getHours();
-    const isTimeOk = hour >= 8 && hour < 17;
-    const isActive = getManualAccess();
-    updateAccessIndicator(isActive && isTimeOk);
+    // Actualizar indicador al abrir admin
+    updateAccessIndicator(getManualAccess());
 }
 
 function closeLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
