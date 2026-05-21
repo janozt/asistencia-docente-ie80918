@@ -1,427 +1,227 @@
 /* ==========================================
    CONFIGURACIÓN
    ========================================== */
-const GOOGLE_SCRIPT_URL = 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI';
-const ADMIN_CREDENTIALS = {
-    username: 'admin',
-    password: 'admin2026'
-};
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby1Z5lUq9I_7qomDieZWv-rRGeY_nVBjPXXw2eZhHJxFlXTDFe-0m4wafJeITjo0Hox/exec' };
 
+let isExitMode = false; // Variable para saber si estamos en modo salida
 let allRecords = [];
-let filteredRecords = [];
-let exitTime = ''; // Variable global para la hora de salida
 
 /* ==========================================
    INICIALIZACIÓN
    ========================================== */
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ Página cargada correctamente');
-    
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    const todayString = `${year}-${month}-${day}`;
-    
-    const fechaInput = document.getElementById('fecha');
-    if (fechaInput) {
-        fechaInput.value = todayString;
-        fechaInput.min = todayString;
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('fecha').value = today;
+    document.getElementById('fecha').min = today;
     
     checkFormAccess();
-    setInterval(checkFormAccess, 60000);
-    
     setupForm();
     setupLogin();
-    setupAdminToggle();
+    
+    // Evento para el checkbox "OTROS"
+    document.getElementById('checkOtros')?.addEventListener('change', (e) => {
+        const wrapper = document.getElementById('otrosWrapper');
+        wrapper.classList.toggle('hidden', !e.target.checked);
+    });
 });
 
 /* ==========================================
-   HORA DE SALIDA - BOTÓN
+   LÓGICA DE BLOQUEO (MODO SALIDA)
    ========================================== */
-function captureExitTime() {
-    const now = new Date();
-    exitTime = now.toLocaleTimeString('es-PE', { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        second: '2-digit', 
-        hour12: false 
-    });
+function toggleExitMode() {
+    isExitMode = !isExitMode;
+    const btnToggle = document.getElementById('btnToggleExit');
+    const submitBtn = document.getElementById('btnSubmit');
+    const formTitle = document.getElementById('formTitle');
+    const headerBar = document.getElementById('formHeaderBar');
     
-    // Actualizar el campo visualmente
-    const salidaInput = document.getElementById('horaSalida');
-    if(salidaInput) salidaInput.value = exitTime;
-    
-    // Feedback visual al botón
-    const btn = document.querySelector('.btn-exit-time');
-    if(btn) {
-        const originalHTML = btn.innerHTML;
-        const originalStyle = btn.style.cssText;
+    // Campos que se bloquean en modo salida
+    const blockedFields = document.querySelectorAll('.locked-field');
+    const blockedChecks = document.querySelectorAll('.locked-check');
+
+    if (isExitMode) {
+        // ACTIVAR MODO SALIDA
+        // 1. Bloquear campos y cambiar estilo
+        blockedFields.forEach(el => {
+            el.classList.add('locked-field');
+            if(el.tagName === 'INPUT') el.value = ''; // Limpiar campos
+        });
+        blockedChecks.forEach(el => {
+            el.checked = false;
+            el.disabled = true;
+            el.parentElement.classList.add('locked-field');
+        });
+        document.getElementById('otrosWrapper').classList.add('hidden');
+
+        // 2. Cambiar textos y botones
+        btnToggle.innerHTML = '<i class="fas fa-times"></i> CANCELAR (VOLVER A ENTRADA)';
+        btnToggle.classList.remove('btn-toggle-exit'); // Estilo simple
+        btnToggle.classList.add('btn-secondary');
         
-        btn.innerHTML = '<i class="fas fa-check"></i> Registrado';
-        btn.style.background = 'var(--success-bg)';
-        btn.style.borderColor = 'var(--success)';
-        btn.style.color = 'var(--success)';
+        submitBtn.classList.add('exit-mode');
+        submitBtn.querySelector('span').textContent = 'REGISTRAR SALIDA';
         
-        setTimeout(() => {
-            btn.innerHTML = originalHTML;
-            btn.style.cssText = originalStyle;
-        }, 2000);
+        formTitle.innerHTML = '<i class="fas fa-sign-out-alt"></i> REGISTRO DE SALIDA';
+        formTitle.style.color = 'var(--warning)';
+        headerBar.style.background = 'var(--warning)';
+
+        // 3. Foco en DNI
+        document.getElementById('dni').focus();
+
+    } else {
+        // VOLVER A MODO ENTRADA
+        // 1. Desbloquear campos
+        blockedFields.forEach(el => el.classList.remove('locked-field'));
+        blockedChecks.forEach(el => {
+            el.disabled = false;
+            el.parentElement.classList.remove('locked-field');
+        });
+        
+        // Restaurar botón toggle
+        btnToggle.innerHTML = '<i class="fas fa-sign-out-alt"></i> Cambiar a: REGISTRAR SALIDA';
+        btnToggle.classList.remove('btn-secondary');
+        btnToggle.classList.add('btn-toggle-exit');
+
+        // Restaurar submit
+        submitBtn.classList.remove('exit-mode');
+        submitBtn.querySelector('span').textContent = 'REGISTRAR ENTRADA';
+        
+        formTitle.innerHTML = '<i class="fas fa-sign-in-alt"></i> REGISTRO DE ENTRADA';
+        formTitle.style.color = 'var(--primary-dark)';
+        headerBar.style.background = 'var(--primary)';
     }
 }
 
 /* ==========================================
-   CONTROL DE ACCESO (HORARIO + MANUAL)
-   ========================================== */
-function isTimeAllowed() {
-    const now = new Date();
-    const minutes = (now.getHours() * 60) + now.getMinutes();
-    return minutes >= 480 && minutes < 1020; // 08:00 a 17:00
-}
-
-function getManualAccess() {
-    return localStorage.getItem('form_access_enabled') !== 'false';
-}
-
-function setManualAccess(enabled) {
-    localStorage.setItem('form_access_enabled', enabled ? 'true' : 'false');
-}
-
-function checkFormAccess() {
-    const timeOk = isTimeAllowed();
-    const manualOk = getManualAccess();
-    
-    const formCard = document.getElementById('formCard');
-    const btnSubmit = document.getElementById('btnSubmit');
-    const statusEl = document.getElementById('accessStatus');
-    const toggleEl = document.getElementById('formAccessToggle');
-
-    if (!timeOk) {
-        showDisabledOverlay('time');
-        if (btnSubmit) btnSubmit.disabled = true;
-        if (statusEl) { 
-            statusEl.textContent = ' FUERA DE HORARIO'; 
-            statusEl.className = 'access-status inactive'; 
-        }
-        if (toggleEl) toggleEl.checked = false;
-        return;
-    }
-
-    if (manualOk) {
-        removeDisabledOverlay();
-        if (btnSubmit) btnSubmit.disabled = false;
-        if (statusEl) { 
-            statusEl.textContent = '🟢 ACTIVO'; 
-            statusEl.className = 'access-status active'; 
-        }
-        if (toggleEl) toggleEl.checked = true;
-    } else {
-        showDisabledOverlay('manual');
-        if (btnSubmit) btnSubmit.disabled = true;
-        if (statusEl) { 
-            statusEl.textContent = '🔴 DESACTIVADO'; 
-            statusEl.className = 'access-status inactive'; 
-        }
-        if (toggleEl) toggleEl.checked = false;
-    }
-}
-
-function showDisabledOverlay(reason) {
-    const formCard = document.getElementById('formCard');
-    if (formCard.querySelector('.form-disabled-overlay')) return;
-
-    const now = new Date();
-    const currentTime = now.toLocaleTimeString('es-PE', { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        second: '2-digit', 
-        hour12: false 
-    });
-    let message = '', icon = 'fa-lock';
-
-    if (reason === 'time') {
-        message = `⏰ El registro solo está habilitado de 8:00 a.m. a 5:00 p.m.<br>Hora actual: ${currentTime}<br>Intente más tarde.`;
-        icon = 'fa-clock';
-    } else {
-        message = ` El registro ha sido desactivado temporalmente por el administrador.<br>Hora actual: ${currentTime}`;
-        icon = 'fa-ban';
-    }
-
-    const overlay = document.createElement('div');
-    overlay.className = 'form-disabled-overlay';
-    overlay.id = 'blockOverlay';
-    overlay.innerHTML = `
-        <i class="fas ${icon}"></i>
-        <h4>${reason === 'time' ? 'Fuera de Horario' : 'Registro Pausado'}</h4>
-        <p>${message}</p>
-    `;
-    formCard.style.position = 'relative';
-    formCard.appendChild(overlay);
-}
-
-function removeDisabledOverlay() {
-    const overlay = document.getElementById('blockOverlay');
-    if (overlay) overlay.remove();
-}
-
-function toggleFormAccess() {
-    const toggle = document.getElementById('formAccessToggle');
-    const isEnabled = toggle.checked;
-    
-    if (isEnabled && !isTimeAllowed()) {
-        alert('⚠️ No se puede activar: Está fuera del horario permitido (8:00 a.m. - 5:00 p.m.).');
-        toggle.checked = false;
-        return;
-    }
-
-    setManualAccess(isEnabled);
-    checkFormAccess();
-    alert(isEnabled ? '✅ Formulario ACTIVADO' : '🔒 Formulario DESACTIVADO');
-}
-
-/* ==========================================
-   CONFIGURAR FORMULARIO
+   ENVÍO DEL FORMULARIO
    ========================================== */
 function setupForm() {
-    const form = document.getElementById('attendanceForm');
-    if (!form) return;
-    
-    form.addEventListener('submit', async function(e) {
+    document.getElementById('attendanceForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        if (!isTimeAllowed()) {
-            showError(`⏰ El registro solo está habilitado de 8:00 a.m. a 5:00 p.m.\nHora actual: ${new Date().toLocaleTimeString('es-PE', {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})}`);
-            return;
-        }
-        if (!getManualAccess()) {
-            showError('⚠️ El registro ha sido desactivado por el administrador.');
-            return;
-        }
-        
         clearErrors();
-        if (!validateForm()) return;
-        
+
+        if (!getManualAccess()) {
+            showError('El formulario está desactivado por el administrador.');
+            return;
+        }
+
         const dni = document.getElementById('dni').value.trim();
         const fecha = document.getElementById('fecha').value;
-        
+
+        // Validar DNI siempre
+        if (dni.length !== 8) {
+            showFieldError('dniError', 'El DNI debe tener 8 dígitos');
+            return;
+        }
+
         showLoading(true);
-        
-        const now = new Date();
-        const formData = {
-            fecha: fecha,
-            horaEntrada: now.toLocaleTimeString('es-PE', { 
-                hour: '2-digit', 
-                minute: '2-digit', 
-                second: '2-digit', 
-                hour12: false 
-            }),
-            horaSalida: exitTime || '',
-            tema: document.getElementById('tema').value.trim(),
-            nombre: document.getElementById('nombre').value.trim(),
-            dni: dni,
-            nivel: getSelectedNiveles().join(', '),
-            timestamp: now.toISOString()
-        };
-        
-        // 🔹 BUSCAR SI YA EXISTE UN REGISTRO CON ESTE DNI Y FECHA
-        const existingIndex = findExistingRecord(dni, fecha);
-        
-        if (existingIndex !== -1) {
-            // ✅ ACTUALIZAR REGISTRO EXISTENTE (solo hora de salida)
-            allRecords[existingIndex].horaSalida = formData.horaSalida;
-            allRecords[existingIndex].timestamp = formData.timestamp;
+
+        if (isExitMode) {
+            // --- LÓGICA DE SALIDA (SOLO DNI) ---
+            const existingIndex = allRecords.findIndex(r => r.dni === dni && r.fecha === fecha);
             
-            // Guardar en localStorage
-            localStorage.setItem('asistencia_records', JSON.stringify(allRecords));
-            
-            // Enviar a Google Sheets (si está configurado)
-            if (GOOGLE_SCRIPT_URL !== 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI') {
-                try {
-                    await fetch(GOOGLE_SCRIPT_URL, {
-                        method: 'POST', 
-                        mode: 'no-cors', 
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            action: 'update',
-                            index: existingIndex,
-                            data: allRecords[existingIndex]
-                        })
-                    });
-                } catch (error) {
-                    console.error('Error al actualizar en Google Sheets:', error);
-                }
+            if (existingIndex === -1) {
+                showError('No se encontró registro de entrada para hoy con ese DNI.');
+                showLoading(false);
+                return;
             }
-            
-            showSuccess(allRecords[existingIndex], false, true);
+
+            // Actualizar
+            allRecords[existingIndex].horaSalida = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            saveData();
+            showSuccess(allRecords[existingIndex], 'salida');
+
         } else {
-            // ✅ CREAR NUEVO REGISTRO (primera vez del día)
-            saveLocalRecord(formData);
-            
-            if (GOOGLE_SCRIPT_URL !== 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI') {
-                try {
-                    await fetch(GOOGLE_SCRIPT_URL, {
-                        method: 'POST', 
-                        mode: 'no-cors', 
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(formData)
-                    });
-                } catch (error) {
-                    console.error('Error al enviar a Google Sheets:', error);
-                }
+            // --- LÓGICA DE ENTRADA (DATOS COMPLETOS) ---
+            if (!validateEntrance()) {
+                showLoading(false);
+                return;
             }
-            
-            showSuccess(formData);
+
+            // Verificar si ya existe
+            if (allRecords.some(r => r.dni === dni && r.fecha === fecha)) {
+                showError('Ya existe un registro de entrada para hoy con este DNI.');
+                showLoading(false);
+                return;
+            }
+
+            const formData = {
+                fecha: fecha,
+                horaEntrada: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                horaSalida: '',
+                tema: document.getElementById('tema').value,
+                nombre: document.getElementById('nombre').value,
+                dni: dni,
+                nivel: getSelectedNiveles()
+            };
+
+            allRecords.push(formData);
+            saveData();
+            showSuccess(formData, 'entrada');
+        }
+
+        // Enviar a Google Sheets (opcional, si tienes URL configurada)
+        if (GOOGLE_SCRIPT_URL !== 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI') {
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST', mode: 'no-cors', 
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ action: isExitMode ? 'update' : 'create', data: allRecords[allRecords.length-1] })
+                });
+            } catch(err) { console.error(err); }
         }
         
         showLoading(false);
     });
-    
-    // Validación DNI - solo números
-    document.getElementById('dni')?.addEventListener('input', e => {
-        e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 8);
-    });
-    
-    // Validación Nombre - solo letras
-    document.getElementById('nombre')?.addEventListener('input', e => {
-        e.target.value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
-    });
-
-    // Lógica para el campo "OTROS"
-    const checkOtros = document.getElementById('checkOtros');
-    const otrosWrapper = document.getElementById('otrosWrapper');
-    const otrosInput = document.getElementById('otrosNivel');
-
-    if (checkOtros && otrosWrapper && otrosInput) {
-        checkOtros.addEventListener('change', function() {
-            if (this.checked) { 
-                otrosWrapper.classList.remove('hidden'); 
-                otrosInput.focus(); 
-            } else { 
-                otrosWrapper.classList.add('hidden'); 
-                otrosInput.value = ''; 
-            }
-        });
-    }
 }
 
 /* ==========================================
-   BUSCAR REGISTRO EXISTENTE
+   UTILIDADES
    ========================================== */
-function findExistingRecord(dni, fecha) {
-    const records = getLocalRecords();
-    return records.findIndex(r => r.dni === dni && r.fecha === fecha);
-}
-
-/* ==========================================
-   VALIDACIÓN
-   ========================================== */
-function validateForm() {
-    let isValid = true;
-    const checks = [
-        { id: 'fecha', err: 'fechaError', msg: 'Seleccione la fecha' },
-        { id: 'tema', err: 'temaError', msg: 'El tema es obligatorio' },
-        { id: 'nombre', err: 'nombreError', msg: 'El nombre es obligatorio' },
-        { id: 'dni', err: 'dniError', msg: 'El DNI es obligatorio' }
-    ];
-    
-    checks.forEach(c => {
-        const val = document.getElementById(c.id).value.trim();
-        if (!val) { 
-            showFieldError(c.err, c.msg); 
-            isValid = false; 
-        }
-    });
-
-    const dni = document.getElementById('dni').value.trim();
-    if (dni && dni.length !== 8) { 
-        showFieldError('dniError', 'El DNI debe tener 8 dígitos'); 
-        isValid = false; 
-    }
-    
-    if (getSelectedNiveles().length === 0) { 
-        showFieldError('nivelError', 'Seleccione al menos un nivel'); 
-        isValid = false; 
-    }
-    
-    const checkOtros = document.getElementById('checkOtros');
-    if (checkOtros?.checked && !document.getElementById('otrosNivel').value.trim()) {
-        showFieldError('otrosError', 'Especifique el nivel'); 
-        isValid = false;
-    }
-    return isValid;
-}
-
-function showFieldError(id, msg) { 
-    const el = document.getElementById(id); 
-    if(el) { 
-        el.textContent = msg; 
-        el.style.display = 'block'; 
-    } 
-}
-
-function clearErrors() { 
-    document.querySelectorAll('.error-msg').forEach(el => { 
-        el.textContent = ''; 
-        el.style.display = 'none'; 
-    }); 
+function validateEntrance() {
+    let ok = true;
+    if (!document.getElementById('tema').value) { showFieldError('temaError', 'Campo obligatorio'); ok = false; }
+    if (!document.getElementById('nombre').value) { showFieldError('nombreError', 'Campo obligatorio'); ok = false; }
+    if (getSelectedNiveles().length === 0) { showFieldError('nivelError', 'Seleccione un nivel'); ok = false; }
+    return ok;
 }
 
 function getSelectedNiveles() {
-    const niveles = Array.from(document.querySelectorAll('input[name="nivel"]:checked')).map(cb => cb.value);
-    if (niveles.includes('OTROS')) {
-        const txt = document.getElementById('otrosNivel').value.trim();
-        niveles[niveles.indexOf('OTROS')] = txt ? `OTROS: ${txt.toUpperCase()}` : 'OTROS';
-    }
-    return niveles;
+    return Array.from(document.querySelectorAll('input[name="nivel"]:checked')).map(c => c.value).join(', ');
 }
 
-/* ==========================================
-   ALMACENAMIENTO LOCAL
-   ========================================== */
-function getLocalRecords() { 
-    try { 
-        return JSON.parse(localStorage.getItem('asistencia_records') || '[]'); 
-    } catch { 
-        return []; 
-    } 
+function saveData() {
+    localStorage.setItem('asistencia_db', JSON.stringify(allRecords));
 }
 
-function saveLocalRecord(data) { 
-    const r = getLocalRecords(); 
-    r.push(data); 
-    localStorage.setItem('asistencia_records', JSON.stringify(r)); 
+function loadData() {
+    try { allRecords = JSON.parse(localStorage.getItem('asistencia_db')) || []; } 
+    catch { allRecords = []; }
 }
 
-/* ==========================================
-   MOSTRAR ÉXITO / ERROR
-   ========================================== */
-function showSuccess(data, isLocal = false, isUpdate = false) {
+function showFieldError(id, msg) {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
+
+function clearErrors() {
+    document.querySelectorAll('.error-msg').forEach(e => e.style.display = 'none');
+}
+
+function showSuccess(data, type) {
     document.getElementById('formCard').classList.add('hidden');
     document.getElementById('successCard').classList.remove('hidden');
     
-    let html = `
-        <p><strong>📅 Fecha:</strong> ${data.fecha}</p>
-        <p><strong>⏰ Entrada:</strong> ${data.horaEntrada}</p>
-        <p><strong>🏁 Salida:</strong> ${data.horaSalida || 'No registrada'}</p>
-        <p><strong>👤 Docente:</strong> ${data.nombre}</p>
-        <p><strong>🆔 DNI:</strong> ${data.dni}</p>
-        <p><strong>📚 Nivel:</strong> ${data.nivel}</p>
+    const title = type === 'entrada' ? '¡Entrada Registrada!' : '¡Salida Registrada!';
+    document.getElementById('successTitle').textContent = title;
+    document.getElementById('successMessage').textContent = type === 'entrada' ? 'Bienvenido, buen día.' : 'Hasta mañana.';
+    
+    document.getElementById('successDetails').innerHTML = `
+        <p><strong>DNI:</strong> ${data.dni}</p>
+        <p><strong>Nombre:</strong> ${data.nombre}</p>
+        <p><strong>Entrada:</strong> ${data.horaEntrada}</p>
+        <p><strong>Salida:</strong> ${data.horaSalida || 'Pendiente'}</p>
     `;
-    
-    if (isUpdate) {
-        html += `<p style="color: var(--success); margin-top: 0.5rem; font-weight: 600;">
-            <i class="fas fa-sync-alt"></i> Hora de salida actualizada correctamente
-        </p>`;
-    }
-    
-    if (isLocal) {
-        html += `<p style="color: var(--warning); margin-top: 0.5rem;">
-            <i class="fas fa-exclamation-circle"></i> Guardado localmente
-        </p>`;
-    }
-    
-    document.getElementById('successDetails').innerHTML = html;
 }
 
 function showError(msg) {
@@ -430,163 +230,124 @@ function showError(msg) {
     document.getElementById('errorMessage').textContent = msg;
 }
 
-function resetForm() {
+function resetForms() {
     document.getElementById('attendanceForm').reset();
-    clearErrors();
-    
-    const today = new Date();
-    document.getElementById('fecha').value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-    
-    // Limpiar hora de salida
-    exitTime = '';
-    document.getElementById('horaSalida').value = '';
-    document.getElementById('otrosWrapper')?.classList.add('hidden');
-    document.getElementById('otrosNivel').value = '';
-    document.getElementById('checkOtros').checked = false;
-    
-    document.getElementById('formCard').classList.remove('hidden');
     document.getElementById('successCard').classList.add('hidden');
     document.getElementById('errorCard').classList.add('hidden');
+    document.getElementById('formCard').classList.remove('hidden');
+    
+    // Resetear a modo entrada si estaba en salida
+    if (isExitMode) toggleExitMode();
+    
+    // Restaurar fecha
+    document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
+    clearErrors();
+}
+
+function showLoading(show) {
+    document.getElementById('loadingOverlay').classList.toggle('hidden', !show);
 }
 
 /* ==========================================
-   ADMIN PANEL
+   ADMIN & ACCESO
    ========================================== */
-function setupAdminToggle() { 
-    document.getElementById('adminToggle')?.addEventListener('click', () => 
-        document.getElementById('loginModal').classList.remove('hidden')
-    ); 
-}
+function getManualAccess() { return localStorage.getItem('form_enabled') !== 'false'; }
 
-function closeLoginModal() { 
-    document.getElementById('loginModal').classList.add('hidden'); 
-    document.getElementById('loginForm').reset(); 
-    document.getElementById('loginError').textContent = ''; 
-}
-
-function togglePassword() {
-    const p = document.getElementById('adminPass'), i = document.getElementById('eyeIcon');
-    if(p.type === 'password') { 
-        p.type = 'text'; 
-        i.className = 'fas fa-eye-slash'; 
-    } else { 
-        p.type = 'password'; 
-        i.className = 'fas fa-eye'; 
+function checkFormAccess() {
+    const btnSubmit = document.getElementById('btnSubmit');
+    const btnToggle = document.getElementById('btnToggleExit');
+    const isActive = getManualAccess();
+    
+    // Validar horario (8:00 a 17:00)
+    const hour = new Date().getHours();
+    const isTimeOk = hour >= 8 && hour < 17;
+    
+    const finalState = isActive && isTimeOk;
+    
+    btnSubmit.disabled = !finalState;
+    btnToggle.disabled = !finalState;
+    
+    const statusEl = document.getElementById('accessStatus');
+    if (statusEl) {
+        statusEl.textContent = finalState ? '🟢 ACTIVO' : '🔴 BLOQUEADO';
+        statusEl.style.color = finalState ? 'var(--success)' : 'var(--error)';
     }
 }
 
+function toggleFormAccess() {
+    const check = document.getElementById('formAccessToggle').checked;
+    localStorage.setItem('form_enabled', check);
+    checkFormAccess();
+}
+
+// Admin Panel (Funciones básicas)
 function setupLogin() {
-    document.getElementById('loginForm')?.addEventListener('submit', e => {
+    document.getElementById('loginForm').addEventListener('submit', (e) => {
         e.preventDefault();
-        if(document.getElementById('adminUser').value === ADMIN_CREDENTIALS.username && 
-           document.getElementById('adminPass').value === ADMIN_CREDENTIALS.password) {
-            closeLoginModal();
+        const u = document.getElementById('adminUser').value;
+        const p = document.getElementById('adminPass').value;
+        
+        if (u === ADMIN_CREDENTIALS.username && p === ADMIN_CREDENTIALS.password) {
+            document.getElementById('loginModal').classList.add('hidden');
             document.getElementById('adminPanel').classList.remove('hidden');
-            loadRecords();
+            loadRecordsForAdmin();
         } else {
-            document.getElementById('loginError').textContent = 'Usuario o contraseña incorrectos';
+            document.getElementById('loginError').textContent = 'Credenciales incorrectas';
         }
     });
 }
 
-function closeAdminPanel() { 
-    document.getElementById('adminPanel').classList.add('hidden'); 
-}
-
-function loadRecords() {
-    allRecords = getLocalRecords();
-    filteredRecords = [...allRecords];
-    checkFormAccess();
-    renderRecords(filteredRecords);
-    updateStats();
-}
-
-function renderRecords(records) {
+function loadRecordsForAdmin() {
+    loadData();
     const tbody = document.getElementById('recordsBody');
-    if (!tbody) return;
+    tbody.innerHTML = '';
     
-    if (records.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--gray-400);">No se encontraron registros</td></tr>';
-        document.getElementById('recordsCount').textContent = '0 registros';
-        return;
-    }
-    
-    tbody.innerHTML = records.map((r, i) => `
-        <tr>
-            <td>${i+1}</td>
-            <td>${formatDateDisplay(r.fecha)}</td>
-            <td>${r.horaEntrada || '-'}</td>
-            <td>${r.horaSalida || '-'}</td>
-            <td>${r.tema}</td>
-            <td><strong>${r.nombre}</strong></td>
-            <td><code>${r.dni}</code></td>
-            <td>${r.nivel}</td>
-        </tr>
-    `).join('');
-    
-    document.getElementById('recordsCount').textContent = `${records.length} registro(s) encontrado(s)`;
-}
-
-function updateStats() {
-    document.getElementById('totalRegistros').textContent = allRecords.length;
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-    document.getElementById('totalHoy').textContent = allRecords.filter(r => r.fecha === todayStr).length;
-    const niveles = new Set();
-    allRecords.forEach(r => r.nivel.split(', ').forEach(n => n && niveles.add(n.trim())));
-    document.getElementById('totalNiveles').textContent = niveles.size;
-}
-
-function filterRecords() {
-    const txt = document.getElementById('searchInput').value.trim().toLowerCase();
-    const date = document.getElementById('filterDate').value;
-    filteredRecords = allRecords.filter(r => {
-        const matchTxt = !txt || r.nombre.toLowerCase().includes(txt) || r.dni.includes(txt) || r.tema.toLowerCase().includes(txt);
-        const matchDate = !date || r.fecha === date;
-        return matchTxt && matchDate;
+    allRecords.forEach((r, i) => {
+        tbody.innerHTML += `
+            <tr>
+                <td>${i+1}</td>
+                <td>${r.fecha}</td>
+                <td>${r.horaEntrada}</td>
+                <td style="color: ${r.horaSalida ? 'green' : 'red'}">${r.horaSalida || '-'}</td>
+                <td>${r.tema}</td>
+                <td>${r.nombre}</td>
+                <td>${r.dni}</td>
+                <td>${r.nivel}</td>
+            </tr>`;
     });
-    renderRecords(filteredRecords);
+    
+    document.getElementById('totalRegistros').textContent = allRecords.length;
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('totalHoy').textContent = allRecords.filter(r => r.fecha === today).length;
 }
 
-function resetFilters() {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('filterDate').value = '';
-    filteredRecords = [...allRecords];
-    renderRecords(filteredRecords);
+function closeLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
+function closeAdminPanel() { document.getElementById('adminPanel').classList.add('hidden'); }
+function togglePassword() {
+    const p = document.getElementById('adminPass');
+    const i = document.getElementById('eyeIcon');
+    if(p.type === 'password') { p.type='text'; i.classList.replace('fa-eye', 'fa-eye-slash'); }
+    else { p.type='password'; i.classList.replace('fa-eye-slash', 'fa-eye'); }
 }
 
 function downloadExcel() {
-    if (filteredRecords.length === 0) return alert('No hay registros para exportar.');
-    let csv = '\uFEFFN°;Fecha;Entrada;Salida;Tema;Docente;DNI;Nivel\n';
-    filteredRecords.forEach((r, i) => {
-        csv += `${i+1};${formatDateDisplay(r.fecha)};${r.horaEntrada};${r.horaSalida||''};"${r.tema.replace(/"/g,'""')}";"${r.nombre.replace(/"/g,'""')}";${r.dni};"${r.nivel}"\n`;
+    loadData();
+    let csv = 'N°,Fecha,Entrada,Salida,Tema,Docente,DNI,Nivel\n';
+    allRecords.forEach((r, i) => {
+        csv += `${i+1},${r.fecha},${r.horaEntrada},${r.horaSalida},"${r.tema}","${r.nombre}",${r.dni},"${r.nivel}"\n`;
     });
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csv], {type: 'text/csv'});
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `Asistencia_Docente_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = 'asistencia.csv';
     link.click();
 }
 
-function printReport() {
-    if (filteredRecords.length === 0) return alert('No hay registros para imprimir.');
-    window.print();
-}
-
-function showLoading(show) { 
-    document.getElementById('loadingOverlay')?.classList.toggle('hidden', !show); 
-}
-
-function formatDateDisplay(d) { 
-    if(!d) return ''; 
-    const [y,m,day] = d.split('-'); 
-    return `${day}/${m}/${y}`; 
-}
-
-document.getElementById('loginModal')?.addEventListener('click', e => 
-    e.target.id === 'loginModal' && closeLoginModal()
-);
-document.getElementById('adminPanel')?.addEventListener('click', e => 
-    e.target.id === 'adminPanel' && closeAdminPanel()
-);
-document.getElementById('searchInput')?.addEventListener('input', filterRecords);
+// Listeners Admin
+document.getElementById('adminToggle').addEventListener('click', () => document.getElementById('loginModal').classList.remove('hidden'));
+document.getElementById('filterDate').addEventListener('change', () => {
+    const date = document.getElementById('filterDate').value;
+    const filtered = date ? allRecords.filter(r => r.fecha === date) : allRecords;
+    // Actualizar tabla con filtrado (lógica simplificada)
+    document.getElementById('recordsBody').innerHTML = filtered.map((r,i) => `<tr><td>${i+1}</td><td>${r.fecha}</td><td>${r.horaEntrada}</td><td>${r.horaSalida||'-'}</td><td>${r.tema}</td><td>${r.nombre}</td><td>${r.dni}</td><td>${r.nivel}</td></tr>`).join('');
+});
