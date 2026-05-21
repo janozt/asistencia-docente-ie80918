@@ -46,7 +46,7 @@
                     </button>
                 </div>
 
-                <!-- FECHA -->
+                <!-- FECHA (Siempre visible) -->
                 <div class="form-group">
                     <label class="form-label" for="fecha">
                         <i class="fas fa-calendar-alt"></i> FECHA <span class="required">*</span>
@@ -57,7 +57,7 @@
                     </div>
                 </div>
 
-                <!-- CONTENEDOR DE DATOS PERSONALES -->
+                <!-- ✅ CONTENEDOR DE DATOS PERSONALES (Se oculta en modo salida) -->
                 <div id="personalDataContainer">
                     <!-- TEMA -->
                     <div class="form-group">
@@ -119,8 +119,9 @@
                         <span class="error-msg" id="nivelError"></span>
                     </div>
                 </div>
+                <!-- ✅ FIN CONTENEDOR DE DATOS PERSONALES -->
 
-                <!-- DNI -->
+                <!-- DNI (Siempre visible) -->
                 <div class="form-group">
                     <label class="form-label" for="dni">
                         <i class="fas fa-id-card"></i> DNI <span class="required">*</span>
@@ -184,7 +185,7 @@
 
     <!-- BOTÓN ADMIN PREMIUM -->
     <button class="admin-toggle" id="adminToggle" title="Panel de Administrador">
-        <i class="fas fa-cog fa-spin-hover"></i>
+        <i class="fas fa-cog"></i>
     </button>
 
     <!-- MODAL LOGIN PREMIUM -->
@@ -200,30 +201,22 @@
             </div>
             <form id="loginForm" class="premium-form">
                 <div class="form-group premium">
-                    <label class="premium-label">
-                        <i class="fas fa-user-shield"></i> Usuario
-                    </label>
+                    <label class="premium-label"><i class="fas fa-user-shield"></i> Usuario</label>
                     <div class="input-wrapper premium">
-                        <input type="text" id="adminUser" required placeholder="admin" autocomplete="username">
+                        <input type="text" id="adminUser" required placeholder="admin">
                         <i class="fas fa-user input-icon"></i>
                     </div>
                 </div>
                 <div class="form-group premium">
-                    <label class="premium-label">
-                        <i class="fas fa-lock"></i> Contraseña
-                    </label>
+                    <label class="premium-label"><i class="fas fa-lock"></i> Contraseña</label>
                     <div class="input-wrapper premium">
-                        <input type="password" id="adminPass" required placeholder="••••••••" autocomplete="current-password">
+                        <input type="password" id="adminPass" required placeholder="••••••••">
                         <i class="fas fa-lock input-icon"></i>
-                        <button type="button" class="toggle-pass" onclick="togglePassword()">
-                            <i class="fas fa-eye" id="eyeIcon"></i>
-                        </button>
+                        <button type="button" class="toggle-pass" onclick="togglePassword()"><i class="fas fa-eye" id="eyeIcon"></i></button>
                     </div>
                 </div>
                 <span class="error-msg" id="loginError"></span>
-                <button type="submit" class="btn-premium">
-                    <i class="fas fa-sign-in-alt"></i> Ingresar al Sistema
-                </button>
+                <button type="submit" class="btn-premium"><i class="fas fa-sign-in-alt"></i> Ingresar al Sistema</button>
             </form>
         </div>
     </div>
@@ -233,73 +226,50 @@
         <div class="admin-panel-card premium">
             <div class="admin-header premium">
                 <div class="admin-header-content">
-                    <div class="admin-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
+                    <div class="admin-icon"><i class="fas fa-chart-line"></i></div>
                     <div>
                         <h3>Panel de Control</h3>
                         <p>Gestión avanzada de asistencia docente</p>
                     </div>
                 </div>
-                <button class="btn-logout premium" onclick="closeAdminPanel()">
-                    <i class="fas fa-sign-out-alt"></i> <span>Salir</span>
-                </button>
+                <button class="btn-logout premium" onclick="closeAdminPanel()"><i class="fas fa-sign-out-alt"></i> <span>Salir</span></button>
             </div>
             
-            <!-- Control de Acceso Premium -->
+            <!-- ✅ CONTROL DE ACCESO CON SWITCH CORREGIDO -->
             <div class="access-control premium">
                 <div class="access-toggle premium">
                     <div class="access-info">
-                        <span class="access-label">
-                            <i class="fas fa-lock"></i> Estado del Sistema:
-                        </span>
+                        <span class="access-label"><i class="fas fa-lock"></i> Estado del Sistema:</span>
                         <span class="access-status" id="accessStatus">
                             <i class="fas fa-circle"></i> ACTIVO
                         </span>
                     </div>
+                    <!-- AQUÍ ESTÁ EL SWITCH QUE FALTABA -->
                     <label class="switch premium">
-                        <input type="checkbox" id="formAccessToggle" onchange="toggleFormAccess()">
+                        <input type="checkbox" id="formAccessToggle" onchange="toggleFormAccess()" checked>
                         <span class="slider round"></span>
                     </label>
                 </div>
-                <p class="access-help">
-                    <i class="fas fa-info-circle"></i> 
-                    Cuando está desactivado, los docentes no podrán registrar asistencia
-                </p>
+                <p class="access-help"><i class="fas fa-info-circle"></i> Cuando está desactivado, los docentes no podrán registrar asistencia</p>
             </div>
 
-            <!-- Estadísticas Premium -->
+            <!-- Estadísticas -->
             <div class="stats-grid premium">
                 <div class="stat-card premium">
-                    <div class="stat-icon blue">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-info">
-                        <span class="stat-number" id="totalRegistros">0</span>
-                        <span class="stat-label">Total Registros</span>
-                    </div>
+                    <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+                    <div class="stat-info"><span class="stat-number" id="totalRegistros">0</span><span class="stat-label">Total Registros</span></div>
                 </div>
                 <div class="stat-card premium">
-                    <div class="stat-icon green">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    <div class="stat-info">
-                        <span class="stat-number" id="totalHoy">0</span>
-                        <span class="stat-label">Registros Hoy</span>
-                    </div>
+                    <div class="stat-icon green"><i class="fas fa-calendar-check"></i></div>
+                    <div class="stat-info"><span class="stat-number" id="totalHoy">0</span><span class="stat-label">Registros Hoy</span></div>
                 </div>
                 <div class="stat-card premium">
-                    <div class="stat-icon orange">
-                        <i class="fas fa-layer-group"></i>
-                    </div>
-                    <div class="stat-info">
-                        <span class="stat-number" id="totalNiveles">0</span>
-                        <span class="stat-label">Niveles Activos</span>
-                    </div>
+                    <div class="stat-icon orange"><i class="fas fa-layer-group"></i></div>
+                    <div class="stat-info"><span class="stat-number" id="totalNiveles">0</span><span class="stat-label">Niveles Activos</span></div>
                 </div>
             </div>
 
-            <!-- Filtros Premium -->
+            <!-- Filtros -->
             <div class="filters-bar premium">
                 <div class="filter-group premium">
                     <label><i class="fas fa-search"></i> Buscar docente:</label>
@@ -310,29 +280,19 @@
                     <input type="date" id="filterDate">
                 </div>
                 <div class="filter-actions premium">
-                    <button class="btn-filter premium" onclick="filterRecords()">
-                        <i class="fas fa-search"></i> Buscar
-                    </button>
-                    <button class="btn-filter premium reset" onclick="resetFilters()">
-                        <i class="fas fa-undo"></i> Limpiar
-                    </button>
+                    <button class="btn-filter premium" onclick="filterRecords()"><i class="fas fa-search"></i> Buscar</button>
+                    <button class="btn-filter premium reset" onclick="resetFilters()"><i class="fas fa-undo"></i> Limpiar</button>
                 </div>
             </div>
 
-            <!-- Acciones Premium -->
+            <!-- Acciones -->
             <div class="admin-actions premium">
-                <button class="btn-action premium excel" onclick="downloadExcel()">
-                    <i class="fas fa-file-excel"></i> Descargar Excel
-                </button>
-                <button class="btn-action premium print" onclick="printReport()">
-                    <i class="fas fa-print"></i> Imprimir Reporte
-                </button>
-                <button class="btn-action premium refresh" onclick="loadRecords()">
-                    <i class="fas fa-sync-alt"></i> Actualizar
-                </button>
+                <button class="btn-action premium excel" onclick="downloadExcel()"><i class="fas fa-file-excel"></i> Descargar Excel</button>
+                <button class="btn-action premium print" onclick="printReport()"><i class="fas fa-print"></i> Imprimir Reporte</button>
+                <button class="btn-action premium refresh" onclick="loadRecords()"><i class="fas fa-sync-alt"></i> Actualizar</button>
             </div>
 
-            <!-- Tabla Premium -->
+            <!-- Tabla -->
             <div class="table-container premium">
                 <table id="recordsTable" class="premium-table">
                     <thead>
@@ -347,22 +307,10 @@
                             <th>Nivel</th>
                         </tr>
                     </thead>
-                    <tbody id="recordsBody">
-                        <tr>
-                            <td colspan="8" class="loading-row">
-                                <div class="loading-spinner">
-                                    <i class="fas fa-circle-notch fa-spin"></i>
-                                    <p>Cargando registros...</p>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
+                    <tbody id="recordsBody"></tbody>
                 </table>
             </div>
-
-            <div class="table-footer premium">
-                <span id="recordsCount">0 registros encontrados</span>
-            </div>
+            <div class="table-footer premium"><span id="recordsCount">0 registros encontrados</span></div>
         </div>
     </div>
 

@@ -18,8 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
         fechaInput.min = today;
     }
     
-    unlockAllFields();
-    checkFormAccess(); // ✅ Verificar estado al cargar
+    unlockAllFields(); // Asegurar que inicie desbloqueado
+    checkSystemStatus();
     setupForm();
     setupLogin();
     
@@ -33,48 +33,95 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ==========================================
-   DESBLOQUEAR/BLOQUEAR CAMPOS
+   VERIFICAR ESTADO DEL SISTEMA
    ========================================== */
+function checkSystemStatus() {
+    const isActive = getManualAccess();
+    const hour = new Date().getHours();
+    const isTimeOk = hour >= 8 && hour < 17; // 8:00 AM - 5:00 PM
+    
+    const btnSubmit = document.getElementById('btnSubmit');
+    const btnToggle = document.getElementById('btnToggleExit');
+    
+    if (!isActive || !isTimeOk) {
+        if (btnSubmit) btnSubmit.disabled = true;
+        if (btnToggle) btnToggle.disabled = true;
+        showClosedMessage(isActive, isTimeOk);
+    } else {
+        if (btnSubmit) btnSubmit.disabled = false;
+        if (btnToggle) btnToggle.disabled = false;
+        hideClosedMessage();
+    }
+    
+    updateAccessIndicator(isActive && isTimeOk);
+}
+
+function showClosedMessage(isActive, isTimeOk) {
+    document.getElementById('formCard').classList.add('hidden');
+    document.getElementById('closedCard').classList.remove('hidden');
+    
+    const messageEl = document.getElementById('closedMessage');
+    if (!isTimeOk) {
+        messageEl.innerHTML = '⏰ <strong>Fuera del Horario de Atención</strong><br>El sistema solo está disponible en horario laboral.';
+    } else if (!isActive) {
+        messageEl.innerHTML = '🔒 <strong>Sistema Desactivado</strong><br>El administrador ha desactivado temporalmente el registro.';
+    }
+}
+
+function hideClosedMessage() {
+    document.getElementById('formCard').classList.remove('hidden');
+    document.getElementById('closedCard').classList.add('hidden');
+}
+
+/* ==========================================
+   ✅ BLOQUEAR/DESBLOQUEAR CAMPOS (CORREGIDO)
+   ========================================== */
+function lockPersonalFields() {
+    // Oculta el contenedor completo de datos personales
+    const container = document.getElementById('personalDataContainer');
+    if (container) {
+        container.classList.add('hidden-container');
+    }
+    
+    // Limpia los valores
+    const tema = document.getElementById('tema');
+    const nombre = document.getElementById('nombre');
+    const otrosNivel = document.getElementById('otrosNivel');
+    
+    if (tema) tema.value = '';
+    if (nombre) nombre.value = '';
+    if (otrosNivel) otrosNivel.value = '';
+    
+    // Desmarca checkboxes
+    const checks = document.querySelectorAll('input[name="nivel"]');
+    checks.forEach(el => el.checked = false);
+    
+    // Oculta wrapper de OTROS
+    const otrosWrapper = document.getElementById('otrosWrapper');
+    if (otrosWrapper) otrosWrapper.classList.add('hidden');
+}
+
 function unlockAllFields() {
-    const inputs = document.querySelectorAll('.locked-field');
+    // Muestra el contenedor completo de datos personales
+    const container = document.getElementById('personalDataContainer');
+    if (container) {
+        container.classList.remove('hidden-container');
+    }
+    
+    // Habilita inputs
+    const inputs = document.querySelectorAll('#personalDataContainer input');
     inputs.forEach(el => {
-        el.classList.remove('locked-field');
-        if (el.tagName === 'INPUT') {
-            el.disabled = false;
-            el.readOnly = false;
-        }
+        el.disabled = false;
+        el.readOnly = false;
     });
     
-    const checks = document.querySelectorAll('.locked-check');
+    // Habilita checkboxes
+    const checks = document.querySelectorAll('input[name="nivel"]');
     checks.forEach(el => {
         el.disabled = false;
         const parent = el.closest('.checkbox-item');
         if (parent) parent.classList.remove('locked-field');
     });
-    
-    const otrosWrapper = document.getElementById('otrosWrapper');
-    if (otrosWrapper) otrosWrapper.classList.remove('locked-field');
-}
-
-function lockPersonalFields() {
-    const tema = document.getElementById('tema');
-    const nombre = document.getElementById('nombre');
-    const otrosNivel = document.getElementById('otrosNivel');
-    
-    if (tema) { tema.classList.add('locked-field'); tema.value = ''; }
-    if (nombre) { nombre.classList.add('locked-field'); nombre.value = ''; }
-    if (otrosNivel) { otrosNivel.classList.add('locked-field'); otrosNivel.value = ''; }
-    
-    const checks = document.querySelectorAll('input[name="nivel"]');
-    checks.forEach(el => {
-        el.checked = false;
-        el.disabled = true;
-        const parent = el.closest('.checkbox-item');
-        if (parent) parent.classList.add('locked-field');
-    });
-    
-    const otrosWrapper = document.getElementById('otrosWrapper');
-    if (otrosWrapper) otrosWrapper.classList.add('hidden');
 }
 
 /* ==========================================
@@ -88,8 +135,10 @@ function toggleExitMode() {
     const formTitle = document.getElementById('formTitle');
     const formSubtitle = document.getElementById('formSubtitle');
     const headerBar = document.getElementById('formHeaderBar');
+    const dniInfo = document.getElementById('dniInfo');
     
     if (isExitMode) {
+        // MODO SALIDA: Bloquear y ocultar campos personales
         lockPersonalFields();
         
         if (btnToggle) {
@@ -116,6 +165,9 @@ function toggleExitMode() {
         }
         if (formSubtitle) formSubtitle.textContent = 'Ingrese solo su DNI para registrar su salida';
         if (headerBar) headerBar.style.background = 'var(--warning)';
+        if (dniInfo) {
+            dniInfo.innerHTML = '<i class="fas fa-info-circle"></i> El sistema buscará su registro de entrada y agregará la hora de salida';
+        }
         
         const dniInput = document.getElementById('dni');
         if (dniInput) {
@@ -125,6 +177,7 @@ function toggleExitMode() {
         }
         
     } else {
+        // MODO ENTRADA: Desbloquear y mostrar campos personales
         unlockAllFields();
         
         if (btnToggle) {
@@ -151,6 +204,9 @@ function toggleExitMode() {
         }
         if (formSubtitle) formSubtitle.textContent = 'Complete todos los campos para registrar su ingreso';
         if (headerBar) headerBar.style.background = 'var(--primary)';
+        if (dniInfo) {
+            dniInfo.innerHTML = '<i class="fas fa-info-circle"></i> El DNI se usa para crear o actualizar su registro';
+        }
         
         const dniInput = document.getElementById('dni');
         if (dniInput) {
@@ -171,8 +227,12 @@ function setupForm() {
         e.preventDefault();
         clearErrors();
         
-        if (!getManualAccess()) {
-            showError('El formulario está desactivado por el administrador.');
+        const isActive = getManualAccess();
+        const hour = new Date().getHours();
+        const isTimeOk = hour >= 8 && hour < 17;
+        
+        if (!isActive || !isTimeOk) {
+            showClosedMessage(isActive, isTimeOk);
             return;
         }
         
@@ -189,10 +249,11 @@ function setupForm() {
         showLoading(true);
         
         if (isExitMode) {
+            // MODO SALIDA
             const existingIndex = allRecords.findIndex(r => r.dni === dni && r.fecha === fecha);
             
             if (existingIndex === -1) {
-                showError('❌ No se encontró registro de entrada para hoy.');
+                showError('❌ No se encontró registro de entrada para hoy. Primero debe registrar su entrada.');
                 showLoading(false);
                 return;
             }
@@ -205,13 +266,16 @@ function setupForm() {
             showSuccess(allRecords[existingIndex], 'salida');
             
         } else {
-            if (!validateEntrance()) {
+            // MODO ENTRADA
+            const existingRecord = allRecords.find(r => r.dni === dni && r.fecha === fecha);
+            
+            if (existingRecord) {
+                showError('⚠️ Ya registró su entrada hoy a las ' + existingRecord.horaEntrada + '.<br><br>Si necesita registrar su salida, use el botón "Cambiar a: REGISTRAR SALIDA".');
                 showLoading(false);
                 return;
             }
             
-            if (allRecords.some(r => r.dni === dni && r.fecha === fecha)) {
-                showError('⚠️ Ya registró su entrada hoy. Use el botón "Cambiar a REGISTRAR SALIDA".');
+            if (!validateEntrance()) {
                 showLoading(false);
                 return;
             }
@@ -267,11 +331,10 @@ function setupForm() {
 }
 
 /* ==========================================
-   VALIDACIÓN
+   VALIDACIÓN Y UTILIDADES
    ========================================== */
 function validateEntrance() {
     let isValid = true;
-    
     const tema = document.getElementById('tema');
     const nombre = document.getElementById('nombre');
     const fecha = document.getElementById('fecha');
@@ -280,19 +343,14 @@ function validateEntrance() {
     if (!nombre || !nombre.value.trim()) { showFieldError('nombreError', 'El nombre es obligatorio'); isValid = false; }
     if (!fecha || !fecha.value) { showFieldError('fechaError', 'La fecha es obligatoria'); isValid = false; }
     if (getSelectedNiveles().length === 0) { showFieldError('nivelError', 'Seleccione al menos un nivel'); isValid = false; }
-    
     return isValid;
 }
 
-/* ==========================================
-   UTILIDADES
-   ========================================== */
 function getSelectedNiveles() {
     return Array.from(document.querySelectorAll('input[name="nivel"]:checked')).map(cb => cb.value).join(', ');
 }
 
 function saveData() { localStorage.setItem('asistencia_db', JSON.stringify(allRecords)); }
-
 function loadData() {
     try { allRecords = JSON.parse(localStorage.getItem('asistencia_db')) || []; }
     catch { allRecords = []; }
@@ -333,7 +391,8 @@ function showSuccess(data, type) {
 function showError(msg) {
     document.getElementById('formCard').classList.add('hidden');
     document.getElementById('errorCard').classList.remove('hidden');
-    document.getElementById('errorMessage').textContent = msg;
+    document.getElementById('errorTitle').textContent = 'Error de Registro';
+    document.getElementById('errorMessage').innerHTML = msg;
 }
 
 function resetForms() {
@@ -342,6 +401,7 @@ function resetForms() {
     
     document.getElementById('successCard').classList.add('hidden');
     document.getElementById('errorCard').classList.add('hidden');
+    document.getElementById('closedCard').classList.add('hidden');
     document.getElementById('formCard').classList.remove('hidden');
     
     if (isExitMode) toggleExitMode();
@@ -355,6 +415,8 @@ function resetForms() {
     
     const otrosWrapper = document.getElementById('otrosWrapper');
     if (otrosWrapper) otrosWrapper.classList.add('hidden');
+    
+    checkSystemStatus();
 }
 
 function showLoading(show) {
@@ -363,44 +425,28 @@ function showLoading(show) {
 }
 
 /* ==========================================
-   ✅ CONTROL DE ACCESO - CORREGIDO
+   CONTROL DE ACCESO ADMIN
    ========================================== */
 function getManualAccess() {
     const access = localStorage.getItem('form_enabled');
-    return access !== 'false'; // Por defecto: ACTIVO
+    return access !== 'false';
 }
 
-function checkFormAccess() {
-    const btnSubmit = document.getElementById('btnSubmit');
-    const btnToggle = document.getElementById('btnToggleExit');
-    const isActive = getManualAccess();
-    
-    // Validar horario (8:00 a 17:00)
-    const hour = new Date().getHours();
-    const isTimeOk = hour >= 8 && hour < 17;
-    
-    const finalState = isActive && isTimeOk;
-    
-    if (btnSubmit) btnSubmit.disabled = !finalState;
-    if (btnToggle) btnToggle.disabled = !finalState;
-    
-    // ✅ Actualizar indicador visual en el admin
+function updateAccessIndicator(isActive) {
     const statusEl = document.getElementById('accessStatus');
     const toggleEl = document.getElementById('formAccessToggle');
     
     if (statusEl) {
-        if (finalState) {
-            statusEl.textContent = '🟢 ACTIVO';
+        if (isActive) {
+            statusEl.innerHTML = '<i class="fas fa-circle"></i> ACTIVO';
             statusEl.className = 'access-status active';
         } else {
-            statusEl.textContent = '🔴 BLOQUEADO';
+            statusEl.innerHTML = '<i class="fas fa-circle"></i> BLOQUEADO';
             statusEl.className = 'access-status inactive';
         }
     }
     
-    if (toggleEl) {
-        toggleEl.checked = finalState;
-    }
+    if (toggleEl) toggleEl.checked = isActive;
 }
 
 function toggleFormAccess() {
@@ -408,19 +454,24 @@ function toggleFormAccess() {
     if (check) {
         const newState = check.checked;
         localStorage.setItem('form_enabled', newState);
-        checkFormAccess(); // ✅ Actualizar inmediatamente
         
-        // Mostrar alerta
+        const hour = new Date().getHours();
+        const isTimeOk = hour >= 8 && hour < 17;
+        const finalState = newState && isTimeOk;
+        
+        updateAccessIndicator(finalState);
+        checkSystemStatus();
+        
         if (newState) {
-            alert('✅ Formulario ACTIVADO - Los docentes pueden registrar');
+            alert('✅ Formulario ACTIVADO\n\nLos docentes pueden registrar asistencia.\n\nHorario: 8:00 a.m. - 5:00 p.m.');
         } else {
-            alert('🔒 Formulario BLOQUEADO - Los docentes NO pueden registrar');
+            alert('🔒 Formulario DESACTIVADO\n\nLos docentes NO pueden registrar.\n\nMensaje mostrado: Sistema temporalmente cerrado');
         }
     }
 }
 
 /* ==========================================
-   ADMIN PANEL
+   ADMIN PANEL FUNCIONES
    ========================================== */
 function setupLogin() {
     const loginForm = document.getElementById('loginForm');
@@ -437,7 +488,7 @@ function setupLogin() {
             loadRecordsForAdmin();
         } else {
             const errorEl = document.getElementById('loginError');
-            if (errorEl) errorEl.textContent = 'Usuario o contraseña incorrectos';
+            if (errorEl) errorEl.textContent = '❌ Usuario o contraseña incorrectos';
         }
     });
 }
@@ -450,7 +501,7 @@ function loadRecordsForAdmin() {
     tbody.innerHTML = '';
     
     if (allRecords.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:2rem;">No hay registros</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:3rem;color:var(--gray-400);"><i class="fas fa-inbox" style="font-size:3rem;margin-bottom:1rem;display:block;"></i>No hay registros</td></tr>';
         return;
     }
     
@@ -459,14 +510,14 @@ function loadRecordsForAdmin() {
             <tr>
                 <td>${i+1}</td>
                 <td>${formatDateDisplay(r.fecha)}</td>
-                <td>${r.horaEntrada}</td>
+                <td><strong>${r.horaEntrada}</strong></td>
                 <td style="color: ${r.horaSalida ? 'var(--success)' : 'var(--warning)'}; font-weight: ${r.horaSalida ? '600' : '400'}">
-                    ${r.horaSalida || 'Pendiente'}
+                    ${r.horaSalida || '<em>Pendiente</em>'}
                 </td>
                 <td>${r.tema}</td>
                 <td><strong>${r.nombre}</strong></td>
-                <td><code>${r.dni}</code></td>
-                <td>${r.nivel}</td>
+                <td><code style="background:var(--gray-100);padding:0.2rem 0.5rem;border-radius:4px;">${r.dni}</code></td>
+                <td><span style="background:var(--primary-bg);color:var(--primary);padding:0.3rem 0.6rem;border-radius:50px;font-size:0.8rem;font-weight:600;">${r.nivel}</span></td>
             </tr>
         `;
     });
@@ -478,12 +529,15 @@ function loadRecordsForAdmin() {
     const hoyEl = document.getElementById('totalHoy');
     if (hoyEl) hoyEl.textContent = allRecords.filter(r => r.fecha === today).length;
     
-    // ✅ Actualizar estado del toggle al abrir admin
-    const toggleEl = document.getElementById('formAccessToggle');
-    if (toggleEl) {
-        toggleEl.checked = getManualAccess();
-    }
-    checkFormAccess();
+    const niveles = new Set();
+    allRecords.forEach(r => r.nivel.split(', ').forEach(n => n && niveles.add(n.trim())));
+    const nivelesEl = document.getElementById('totalNiveles');
+    if (nivelesEl) nivelesEl.textContent = niveles.size;
+    
+    const hour = new Date().getHours();
+    const isTimeOk = hour >= 8 && hour < 17;
+    const isActive = getManualAccess();
+    updateAccessIndicator(isActive && isTimeOk);
 }
 
 function closeLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
@@ -493,16 +547,8 @@ function togglePassword() {
     const p = document.getElementById('adminPass');
     const i = document.getElementById('eyeIcon');
     if (!p || !i) return;
-    
-    if (p.type === 'password') {
-        p.type = 'text';
-        i.classList.remove('fa-eye');
-        i.classList.add('fa-eye-slash');
-    } else {
-        p.type = 'password';
-        i.classList.remove('fa-eye-slash');
-        i.classList.add('fa-eye');
-    }
+    if (p.type === 'password') { p.type = 'text'; i.classList.remove('fa-eye'); i.classList.add('fa-eye-slash'); } 
+    else { p.type = 'password'; i.classList.remove('fa-eye-slash'); i.classList.add('fa-eye'); }
 }
 
 function downloadExcel() {
@@ -511,7 +557,6 @@ function downloadExcel() {
     allRecords.forEach((r, i) => {
         csv += `${i+1},${r.fecha},${r.horaEntrada},${r.horaSalida || ''},"${r.tema}","${r.nombre}",${r.dni},"${r.nivel}"\n`;
     });
-    
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -519,45 +564,47 @@ function downloadExcel() {
     link.click();
 }
 
+function printReport() { window.print(); }
+
 function formatDateDisplay(dateStr) {
     if (!dateStr) return '';
     const [year, month, day] = dateStr.split('-');
     return `${day}/${month}/${year}`;
 }
 
-// Event Listeners
+function filterRecords() {
+    const txt = document.getElementById('searchInput').value.toLowerCase();
+    const date = document.getElementById('filterDate').value;
+    const filtered = allRecords.filter(r => {
+        const matchTxt = !txt || r.nombre.toLowerCase().includes(txt) || r.dni.includes(txt) || (r.tema && r.tema.toLowerCase().includes(txt));
+        const matchDate = !date || r.fecha === date;
+        return matchTxt && matchDate;
+    });
+    
+    const tbody = document.getElementById('recordsBody');
+    if (tbody) {
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:3rem;color:var(--gray-400);">No se encontraron registros</td></tr>';
+        } else {
+            tbody.innerHTML = filtered.map((r, i) => `
+                <tr><td>${i+1}</td><td>${formatDateDisplay(r.fecha)}</td><td>${r.horaEntrada}</td><td>${r.horaSalida || '-'}</td><td>${r.tema}</td><td>${r.nombre}</td><td>${r.dni}</td><td>${r.nivel}</td></tr>
+            `).join('');
+        }
+        document.getElementById('recordsCount').textContent = `${filtered.length} registro(s) encontrado(s)`;
+    }
+}
+
+function resetFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('filterDate').value = '';
+    loadRecordsForAdmin();
+}
+
 const adminToggle = document.getElementById('adminToggle');
 if (adminToggle) adminToggle.addEventListener('click', () => document.getElementById('loginModal').classList.remove('hidden'));
 
-const filterDate = document.getElementById('filterDate');
-if (filterDate) {
-    filterDate.addEventListener('change', () => {
-        const date = filterDate.value;
-        const filtered = date ? allRecords.filter(r => r.fecha === date) : allRecords;
-        const tbody = document.getElementById('recordsBody');
-        if (tbody) {
-            tbody.innerHTML = filtered.map((r, i) => `
-                <tr><td>${i+1}</td><td>${formatDateDisplay(r.fecha)}</td><td>${r.horaEntrada}</td><td>${r.horaSalida || '-'}</td><td>${r.tema}</td><td>${r.nombre}</td><td>${r.dni}</td><td>${r.nivel}</td></tr>
-            `).join('');
-        }
-    });
-}
-
 const searchInput = document.getElementById('searchInput');
-if (searchInput) {
-    searchInput.addEventListener('input', () => {
-        const txt = searchInput.value.toLowerCase();
-        const filtered = allRecords.filter(r => 
-            r.nombre.toLowerCase().includes(txt) || r.dni.includes(txt) || (r.tema && r.tema.toLowerCase().includes(txt))
-        );
-        const tbody = document.getElementById('recordsBody');
-        if (tbody) {
-            tbody.innerHTML = filtered.map((r, i) => `
-                <tr><td>${i+1}</td><td>${formatDateDisplay(r.fecha)}</td><td>${r.horaEntrada}</td><td>${r.horaSalida || '-'}</td><td>${r.tema}</td><td>${r.nombre}</td><td>${r.dni}</td><td>${r.nivel}</td></tr>
-            `).join('');
-        }
-    });
-}
+if (searchInput) searchInput.addEventListener('input', filterRecords);
 
 document.getElementById('loginModal')?.addEventListener('click', (e) => { if (e.target.id === 'loginModal') closeLoginModal(); });
 document.getElementById('adminPanel')?.addEventListener('click', (e) => { if (e.target.id === 'adminPanel') closeAdminPanel(); });
