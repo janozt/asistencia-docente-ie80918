@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fechaInput.min = today;
     }
     
-    unlockAllFields(); // Asegurar que inicie desbloqueado
+    unlockAllFields();
     checkSystemStatus();
     setupForm();
     setupLogin();
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function checkSystemStatus() {
     const isActive = getManualAccess();
     const hour = new Date().getHours();
-    const isTimeOk = hour >= 8 && hour < 17; // 8:00 AM - 5:00 PM
+    const isTimeOk = hour >= 8 && hour < 17;
     
     const btnSubmit = document.getElementById('btnSubmit');
     const btnToggle = document.getElementById('btnToggleExit');
@@ -74,16 +74,12 @@ function hideClosedMessage() {
 }
 
 /* ==========================================
-   ✅ BLOQUEAR/DESBLOQUEAR CAMPOS (CORREGIDO)
+   BLOQUEAR/DESBLOQUEAR CAMPOS
    ========================================== */
 function lockPersonalFields() {
-    // Oculta el contenedor completo de datos personales
     const container = document.getElementById('personalDataContainer');
-    if (container) {
-        container.classList.add('hidden-container');
-    }
+    if (container) container.classList.add('hidden-container');
     
-    // Limpia los valores
     const tema = document.getElementById('tema');
     const nombre = document.getElementById('nombre');
     const otrosNivel = document.getElementById('otrosNivel');
@@ -92,30 +88,23 @@ function lockPersonalFields() {
     if (nombre) nombre.value = '';
     if (otrosNivel) otrosNivel.value = '';
     
-    // Desmarca checkboxes
     const checks = document.querySelectorAll('input[name="nivel"]');
     checks.forEach(el => el.checked = false);
     
-    // Oculta wrapper de OTROS
     const otrosWrapper = document.getElementById('otrosWrapper');
     if (otrosWrapper) otrosWrapper.classList.add('hidden');
 }
 
 function unlockAllFields() {
-    // Muestra el contenedor completo de datos personales
     const container = document.getElementById('personalDataContainer');
-    if (container) {
-        container.classList.remove('hidden-container');
-    }
+    if (container) container.classList.remove('hidden-container');
     
-    // Habilita inputs
     const inputs = document.querySelectorAll('#personalDataContainer input');
     inputs.forEach(el => {
         el.disabled = false;
         el.readOnly = false;
     });
     
-    // Habilita checkboxes
     const checks = document.querySelectorAll('input[name="nivel"]');
     checks.forEach(el => {
         el.disabled = false;
@@ -138,7 +127,6 @@ function toggleExitMode() {
     const dniInfo = document.getElementById('dniInfo');
     
     if (isExitMode) {
-        // MODO SALIDA: Bloquear y ocultar campos personales
         lockPersonalFields();
         
         if (btnToggle) {
@@ -177,7 +165,6 @@ function toggleExitMode() {
         }
         
     } else {
-        // MODO ENTRADA: Desbloquear y mostrar campos personales
         unlockAllFields();
         
         if (btnToggle) {
@@ -217,7 +204,7 @@ function toggleExitMode() {
 }
 
 /* ==========================================
-   FORMULARIO
+   FORMULARIO - CON VALIDACIÓN DE SALIDA DUPLICADA
    ========================================== */
 function setupForm() {
     const form = document.getElementById('attendanceForm');
@@ -249,11 +236,18 @@ function setupForm() {
         showLoading(true);
         
         if (isExitMode) {
-            // MODO SALIDA
+            // MODO SALIDA - CON VALIDACIÓN DE DUPLICADO
             const existingIndex = allRecords.findIndex(r => r.dni === dni && r.fecha === fecha);
             
             if (existingIndex === -1) {
-                showError('❌ No se encontró registro de entrada para hoy. Primero debe registrar su entrada.');
+                showError('❌ No se encontró registro de entrada para hoy.<br><br>Primero debe registrar su entrada.');
+                showLoading(false);
+                return;
+            }
+            
+            // ✅ VALIDACIÓN: Si ya tiene hora de salida, mostrar error
+            if (allRecords[existingIndex].horaSalida) {
+                showError('⚠️ Ya registró su salida hoy a las <strong>' + allRecords[existingIndex].horaSalida + '</strong>.<br><br>No puede registrar su salida dos veces en el mismo día.');
                 showLoading(false);
                 return;
             }
@@ -270,7 +264,7 @@ function setupForm() {
             const existingRecord = allRecords.find(r => r.dni === dni && r.fecha === fecha);
             
             if (existingRecord) {
-                showError('⚠️ Ya registró su entrada hoy a las ' + existingRecord.horaEntrada + '.<br><br>Si necesita registrar su salida, use el botón "Cambiar a: REGISTRAR SALIDA".');
+                showError('⚠️ Ya registró su entrada hoy a las <strong>' + existingRecord.horaEntrada + '</strong>.<br><br>Si necesita registrar su salida, use el botón "Cambiar a: REGISTRAR SALIDA".');
                 showLoading(false);
                 return;
             }
@@ -517,7 +511,7 @@ function loadRecordsForAdmin() {
                 <td>${r.tema}</td>
                 <td><strong>${r.nombre}</strong></td>
                 <td><code style="background:var(--gray-100);padding:0.2rem 0.5rem;border-radius:4px;">${r.dni}</code></td>
-                <td><span style="background:var(--primary-bg);color:var(--primary);padding:0.3rem 0.6rem;border-radius:50px;font-size:0.8rem;font-weight:600;">${r.nivel}</span></td>
+                <td><span style="background:var(--primary-bg);color:var(--primary);padding:0.3rem 0.6rem;border-radius:50px;font-size:0.85rem;font-weight:600;">${r.nivel}</span></td>
             </tr>
         `;
     });
