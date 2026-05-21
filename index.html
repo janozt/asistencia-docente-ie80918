@@ -1,16 +1,128 @@
-<!-- CONTROL DE ACCESO CON SWITCH -->
-<div class="access-control premium">
-    <div class="access-toggle premium">
-        <div class="access-info">
-            <span class="access-label"><i class="fas fa-lock"></i> Estado del Sistema:</span>
-            <span class="access-status" id="accessStatus">
-                <i class="fas fa-circle"></i> ACTIVO
-            </span>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Asistencia Docente - I.E. N°80918 - 2026</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-content">
+            <h1>CONTROL DE ASISTENCIA DOCENTE</h1>
+            <h2>I.E. N°80918 "SAN JUAN BAUTISTA" - 2026</h2>
         </div>
-        <label class="switch premium">
-            <input type="checkbox" id="formAccessToggle" onchange="toggleFormAccess()" checked>
-            <span class="slider round"></span>
-        </label>
+    </header>
+
+    <main class="main-container">
+        <div class="form-card" id="formCard">
+            <div class="form-header">
+                <h3>REGISTRO DE ENTRADA</h3>
+                <p>Complete todos los campos para registrar su ingreso</p>
+            </div>
+
+            <form id="attendanceForm">
+                <div class="form-group">
+                    <label>FECHA *</label>
+                    <input type="date" id="fecha" readonly>
+                </div>
+
+                <div class="exit-mode-toggle">
+                    <button type="button" class="btn-toggle" onclick="toggleExitMode()">
+                        Cambiar a: REGISTRAR SALIDA
+                    </button>
+                </div>
+
+                <div id="personalDataContainer">
+                    <div class="form-group">
+                        <label>TEMA A TRATAR *</label>
+                        <input type="text" id="tema" placeholder="Ingrese el tema">
+                    </div>
+
+                    <div class="form-group">
+                        <label>APELLIDOS Y NOMBRES *</label>
+                        <input type="text" id="nombre" placeholder="Nombre completo">
+                    </div>
+
+                    <div class="form-group">
+                        <label>NIVEL *</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" name="nivel" value="INICIAL"> INICIAL</label>
+                            <label><input type="checkbox" name="nivel" value="PRIMARIA"> PRIMARIA</label>
+                            <label><input type="checkbox" name="nivel" value="SECUNDARIA"> SECUNDARIA</label>
+                            <label><input type="checkbox" name="nivel" value="OTROS"> OTROS</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>DNI *</label>
+                    <input type="text" id="dni" placeholder="Ingrese su DNI (8 dígitos)" maxlength="8">
+                </div>
+
+                <button type="submit" class="btn-primary">REGISTRAR ENTRADA</button>
+            </form>
+        </div>
+
+        <div class="success-card hidden" id="successCard">
+            <h3>¡Registro exitoso!</h3>
+            <p id="successMessage"></p>
+            <button class="btn-secondary" onclick="resetForms()">Nuevo Registro</button>
+        </div>
+
+        <div class="error-card hidden" id="errorCard">
+            <h3>Error</h3>
+            <p id="errorMessage"></p>
+            <button class="btn-secondary" onclick="resetForms()">Intentar nuevamente</button>
+        </div>
+    </main>
+
+    <button class="admin-toggle" onclick="document.getElementById('adminPanel').classList.remove('hidden')">
+        <i class="fas fa-cog"></i>
+    </button>
+
+    <div class="modal-overlay hidden" id="loginModal">
+        <div class="modal-card">
+            <h3>Acceso Administrativo</h3>
+            <input type="text" id="adminUser" placeholder="Usuario">
+            <input type="password" id="adminPass" placeholder="Contraseña">
+            <button onclick="checkLogin()">Ingresar</button>
+            <button class="btn-secondary" onclick="document.getElementById('loginModal').classList.add('hidden')">Cancelar</button>
+        </div>
     </div>
-    <p class="access-help"><i class="fas fa-info-circle"></i> Cuando está desactivado, los docentes no podrán registrar asistencia</p>
-</div>
+
+    <div class="modal-overlay hidden" id="adminPanel">
+        <div class="admin-panel">
+            <h3>Panel de Control</h3>
+            
+            <div class="access-control">
+                <label>
+                    <input type="checkbox" id="formAccessToggle" onchange="toggleFormAccess()" checked>
+                    Estado del Sistema: <span id="accessStatus">ACTIVO</span>
+                </label>
+                <p>Cuando está desactivado, los docentes no podrán registrar asistencia</p>
+            </div>
+
+            <button onclick="loadRecordsForAdmin()">Actualizar Registros</button>
+            <button onclick="downloadExcel()">Descargar Excel</button>
+            <button onclick="document.getElementById('adminPanel').classList.add('hidden')">Cerrar</button>
+
+            <table id="recordsTable">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Entrada</th>
+                        <th>Salida</th>
+                        <th>Docente</th>
+                        <th>DNI</th>
+                    </tr>
+                </thead>
+                <tbody id="recordsBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
