@@ -52,20 +52,20 @@
                         <i class="fas fa-calendar-alt"></i> FECHA <span class="required">*</span>
                     </label>
                     <div class="input-wrapper">
-                        <input type="date" id="fecha" name="fecha" required readonly class="locked-field">
+                        <input type="date" id="fecha" name="fecha" required readonly>
                         <i class="fas fa-calendar input-icon"></i>
                     </div>
                 </div>
 
-                <!-- CONTENEDOR DE DATOS PERSONALES (Se bloquea en modo salida) -->
-                <div id="personalDataGroup">
+                <!-- CONTENEDOR DE DATOS PERSONALES -->
+                <div id="personalDataContainer">
                     <!-- TEMA -->
                     <div class="form-group">
                         <label class="form-label" for="tema">
                             <i class="fas fa-book-open"></i> TEMA A TRATAR <span class="required">*</span>
                         </label>
                         <div class="input-wrapper">
-                            <input type="text" id="tema" name="tema" required maxlength="150" placeholder="Ingrese el tema" class="locked-field">
+                            <input type="text" id="tema" name="tema" required maxlength="150" placeholder="Ingrese el tema">
                             <i class="fas fa-book-open input-icon"></i>
                         </div>
                         <span class="error-msg" id="temaError"></span>
@@ -77,7 +77,7 @@
                             <i class="fas fa-user"></i> APELLIDOS Y NOMBRES <span class="required">*</span>
                         </label>
                         <div class="input-wrapper">
-                            <input type="text" id="nombre" name="nombre" required maxlength="100" placeholder="Nombre completo" class="locked-field">
+                            <input type="text" id="nombre" name="nombre" required maxlength="100" placeholder="Nombre completo">
                             <i class="fas fa-user input-icon"></i>
                         </div>
                         <span class="error-msg" id="nombreError"></span>
@@ -88,32 +88,31 @@
                         <label class="form-label">
                             <i class="fas fa-layer-group"></i> NIVEL <span class="required">*</span>
                         </label>
-                        <div class="checkbox-group" id="levelGroup">
-                            <label class="checkbox-item locked-field">
-                                <input type="checkbox" name="nivel" value="INICIAL" class="locked-check">
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="nivel" value="INICIAL">
                                 <span class="checkmark"><i class="fas fa-baby"></i></span>
                                 <span class="label-text">INICIAL</span>
                             </label>
-                            <label class="checkbox-item locked-field">
-                                <input type="checkbox" name="nivel" value="PRIMARIA" class="locked-check">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="nivel" value="PRIMARIA">
                                 <span class="checkmark"><i class="fas fa-child"></i></span>
                                 <span class="label-text">PRIMARIA</span>
                             </label>
-                            <label class="checkbox-item locked-field">
-                                <input type="checkbox" name="nivel" value="SECUNDARIA" class="locked-check">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="nivel" value="SECUNDARIA">
                                 <span class="checkmark"><i class="fas fa-user-graduate"></i></span>
                                 <span class="label-text">SECUNDARIA</span>
                             </label>
-                            <label class="checkbox-item locked-field">
-                                <input type="checkbox" name="nivel" value="OTROS" id="checkOtros" class="locked-check">
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="nivel" value="OTROS" id="checkOtros">
                                 <span class="checkmark"><i class="fas fa-chalkboard-teacher"></i></span>
                                 <span class="label-text">OTROS</span>
                             </label>
                         </div>
-                        <!-- Campo Otros -->
-                        <div class="otros-input-wrapper hidden locked-field" id="otrosWrapper">
+                        <div class="otros-input-wrapper hidden" id="otrosWrapper">
                             <div class="input-wrapper">
-                                <input type="text" id="otrosNivel" maxlength="50" placeholder="Especifique" class="locked-field">
+                                <input type="text" id="otrosNivel" maxlength="50" placeholder="Especifique">
                                 <i class="fas fa-edit input-icon"></i>
                             </div>
                         </div>
@@ -121,8 +120,8 @@
                     </div>
                 </div>
 
-                <!-- DNI (SIEMPRE HABILITADO, PERO REQUERIDO) -->
-                <div class="form-group dni-group-highlight">
+                <!-- DNI -->
+                <div class="form-group">
                     <label class="form-label" for="dni">
                         <i class="fas fa-id-card"></i> DNI <span class="required">*</span>
                     </label>
@@ -162,91 +161,180 @@
             <div class="error-animation">
                 <div class="error-circle"><i class="fas fa-exclamation-triangle"></i></div>
             </div>
-            <h3>Error</h3>
+            <h3 id="errorTitle">Error</h3>
             <p id="errorMessage"></p>
             <button class="btn-secondary" onclick="resetForms()">
                 <i class="fas fa-redo"></i> Intentar nuevamente
             </button>
         </div>
+
+        <!-- MENSAJE SISTEMA CERRADO -->
+        <div class="closed-card hidden" id="closedCard">
+            <div class="closed-animation">
+                <div class="closed-circle"><i class="fas fa-clock"></i></div>
+            </div>
+            <h3>Sistema Temporalmente Cerrado</h3>
+            <p id="closedMessage">El sistema está fuera del horario de atención.</p>
+            <div class="closed-info">
+                <i class="fas fa-info-circle"></i>
+                <p><strong>Horario de Funcionamiento:</strong><br>8:00 a.m. - 5:00 p.m.<br>Lunes a Viernes</p>
+            </div>
+        </div>
     </main>
 
-    <!-- BOTÓN ADMIN -->
-    <button class="admin-toggle" id="adminToggle"><i class="fas fa-cog"></i></button>
+    <!-- BOTÓN ADMIN PREMIUM -->
+    <button class="admin-toggle" id="adminToggle" title="Panel de Administrador">
+        <i class="fas fa-cog fa-spin-hover"></i>
+    </button>
 
-    <!-- MODAL LOGIN -->
+    <!-- MODAL LOGIN PREMIUM -->
     <div class="modal-overlay hidden" id="loginModal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h3><i class="fas fa-shield-alt"></i> Acceso Administrador</h3>
+        <div class="modal-card admin-login">
+            <div class="modal-header premium">
+                <div class="modal-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3>Acceso Administrativo</h3>
+                <p>Ingrese sus credenciales para continuar</p>
                 <button class="modal-close" onclick="closeLoginModal()"><i class="fas fa-times"></i></button>
             </div>
-            <form id="loginForm">
-                <div class="form-group">
-                    <div class="input-wrapper">
-                        <input type="text" id="adminUser" required placeholder="Usuario">
-                        <i class="fas fa-user-shield input-icon"></i>
+            <form id="loginForm" class="premium-form">
+                <div class="form-group premium">
+                    <label class="premium-label">
+                        <i class="fas fa-user-shield"></i> Usuario
+                    </label>
+                    <div class="input-wrapper premium">
+                        <input type="text" id="adminUser" required placeholder="admin" autocomplete="username">
+                        <i class="fas fa-user input-icon"></i>
                     </div>
                 </div>
-                <div class="form-group">
-                    <div class="input-wrapper">
-                        <input type="password" id="adminPass" required placeholder="Contraseña">
+                <div class="form-group premium">
+                    <label class="premium-label">
+                        <i class="fas fa-lock"></i> Contraseña
+                    </label>
+                    <div class="input-wrapper premium">
+                        <input type="password" id="adminPass" required placeholder="••••••••" autocomplete="current-password">
                         <i class="fas fa-lock input-icon"></i>
-                        <button type="button" class="toggle-pass" onclick="togglePassword()"><i class="fas fa-eye" id="eyeIcon"></i></button>
+                        <button type="button" class="toggle-pass" onclick="togglePassword()">
+                            <i class="fas fa-eye" id="eyeIcon"></i>
+                        </button>
                     </div>
                 </div>
                 <span class="error-msg" id="loginError"></span>
-                <button type="submit" class="btn-primary btn-full">Ingresar</button>
+                <button type="submit" class="btn-premium">
+                    <i class="fas fa-sign-in-alt"></i> Ingresar al Sistema
+                </button>
             </form>
         </div>
     </div>
 
-    <!-- PANEL ADMIN -->
+    <!-- PANEL ADMIN PREMIUM -->
     <div class="modal-overlay hidden" id="adminPanel">
-        <div class="admin-panel-card">
-            <div class="admin-header">
-                <div>
-                    <h3><i class="fas fa-chart-bar"></i> Panel de Administración</h3>
+        <div class="admin-panel-card premium">
+            <div class="admin-header premium">
+                <div class="admin-header-content">
+                    <div class="admin-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <h3>Panel de Control</h3>
+                        <p>Gestión avanzada de asistencia docente</p>
+                    </div>
                 </div>
-                <button class="btn-logout" onclick="closeAdminPanel()"><i class="fas fa-sign-out-alt"></i> Salir</button>
+                <button class="btn-logout premium" onclick="closeAdminPanel()">
+                    <i class="fas fa-sign-out-alt"></i> <span>Salir</span>
+                </button>
             </div>
             
-            <div class="access-control">
-                <div class="access-toggle">
-                    <span class="access-label"><i class="fas fa-lock"></i> Estado:</span>
-                    <label class="switch">
+            <!-- Control de Acceso Premium -->
+            <div class="access-control premium">
+                <div class="access-toggle premium">
+                    <div class="access-info">
+                        <span class="access-label">
+                            <i class="fas fa-lock"></i> Estado del Sistema:
+                        </span>
+                        <span class="access-status" id="accessStatus">
+                            <i class="fas fa-circle"></i> ACTIVO
+                        </span>
+                    </div>
+                    <label class="switch premium">
                         <input type="checkbox" id="formAccessToggle" onchange="toggleFormAccess()">
                         <span class="slider round"></span>
                     </label>
-                    <span class="access-status" id="accessStatus">🟢 ACTIVO</span>
+                </div>
+                <p class="access-help">
+                    <i class="fas fa-info-circle"></i> 
+                    Cuando está desactivado, los docentes no podrán registrar asistencia
+                </p>
+            </div>
+
+            <!-- Estadísticas Premium -->
+            <div class="stats-grid premium">
+                <div class="stat-card premium">
+                    <div class="stat-icon blue">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number" id="totalRegistros">0</span>
+                        <span class="stat-label">Total Registros</span>
+                    </div>
+                </div>
+                <div class="stat-card premium">
+                    <div class="stat-icon green">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number" id="totalHoy">0</span>
+                        <span class="stat-label">Registros Hoy</span>
+                    </div>
+                </div>
+                <div class="stat-card premium">
+                    <div class="stat-icon orange">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number" id="totalNiveles">0</span>
+                        <span class="stat-label">Niveles Activos</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon blue"><i class="fas fa-users"></i></div>
-                    <span class="stat-number" id="totalRegistros">0</span>
+            <!-- Filtros Premium -->
+            <div class="filters-bar premium">
+                <div class="filter-group premium">
+                    <label><i class="fas fa-search"></i> Buscar docente:</label>
+                    <input type="text" id="searchInput" placeholder="Nombre o DNI...">
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon green"><i class="fas fa-calendar-day"></i></div>
-                    <span class="stat-number" id="totalHoy">0</span>
+                <div class="filter-group premium">
+                    <label><i class="fas fa-filter"></i> Filtrar por fecha:</label>
+                    <input type="date" id="filterDate">
+                </div>
+                <div class="filter-actions premium">
+                    <button class="btn-filter premium" onclick="filterRecords()">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                    <button class="btn-filter premium reset" onclick="resetFilters()">
+                        <i class="fas fa-undo"></i> Limpiar
+                    </button>
                 </div>
             </div>
 
-            <div class="filters-bar">
-                <input type="text" id="searchInput" placeholder="Buscar nombre o DNI...">
-                <input type="date" id="filterDate">
-                <button class="btn-filter" onclick="filterRecords()"><i class="fas fa-search"></i> Buscar</button>
-                <button class="btn-filter btn-reset" onclick="resetFilters()"><i class="fas fa-undo"></i></button>
+            <!-- Acciones Premium -->
+            <div class="admin-actions premium">
+                <button class="btn-action premium excel" onclick="downloadExcel()">
+                    <i class="fas fa-file-excel"></i> Descargar Excel
+                </button>
+                <button class="btn-action premium print" onclick="printReport()">
+                    <i class="fas fa-print"></i> Imprimir Reporte
+                </button>
+                <button class="btn-action premium refresh" onclick="loadRecords()">
+                    <i class="fas fa-sync-alt"></i> Actualizar
+                </button>
             </div>
 
-            <div class="admin-actions">
-                <button class="btn-action" onclick="downloadExcel()"><i class="fas fa-file-excel"></i> Descargar Excel</button>
-                <button class="btn-action" onclick="printReport()"><i class="fas fa-print"></i> Imprimir</button>
-                <button class="btn-action btn-refresh" onclick="loadRecords()"><i class="fas fa-sync-alt"></i> Actualizar</button>
-            </div>
-
-            <div class="table-container">
-                <table id="recordsTable">
+            <!-- Tabla Premium -->
+            <div class="table-container premium">
+                <table id="recordsTable" class="premium-table">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -259,16 +347,32 @@
                             <th>Nivel</th>
                         </tr>
                     </thead>
-                    <tbody id="recordsBody"></tbody>
+                    <tbody id="recordsBody">
+                        <tr>
+                            <td colspan="8" class="loading-row">
+                                <div class="loading-spinner">
+                                    <i class="fas fa-circle-notch fa-spin"></i>
+                                    <p>Cargando registros...</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
-            <div class="table-footer"><span id="recordsCount">0 registros</span></div>
+
+            <div class="table-footer premium">
+                <span id="recordsCount">0 registros encontrados</span>
+            </div>
         </div>
     </div>
 
-    <!-- LOADING -->
+    <!-- LOADING PREMIUM -->
     <div class="loading-overlay hidden" id="loadingOverlay">
-        <div class="spinner"><i class="fas fa-circle-notch fa-spin"></i><p>Procesando...</p></div>
+        <div class="spinner premium">
+            <div class="spinner-ring"></div>
+            <i class="fas fa-circle-notch"></i>
+            <p>Procesando...</p>
+        </div>
     </div>
 
     <script src="script.js"></script>
