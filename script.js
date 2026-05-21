@@ -11,7 +11,6 @@ let allRecords = [];
    INICIALIZACIÓN
    ========================================== */
 document.addEventListener('DOMContentLoaded', () => {
-    // Establecer fecha de hoy
     const today = new Date().toISOString().split('T')[0];
     const fechaInput = document.getElementById('fecha');
     if (fechaInput) {
@@ -19,30 +18,24 @@ document.addEventListener('DOMContentLoaded', () => {
         fechaInput.min = today;
     }
     
-    // ✅ IMPORTANTE: Desbloquear todos los campos al iniciar
     unlockAllFields();
-    
-    checkFormAccess();
+    checkFormAccess(); // ✅ Verificar estado al cargar
     setupForm();
     setupLogin();
     
-    // Checkbox OTROS
     const checkOtros = document.getElementById('checkOtros');
     if (checkOtros) {
         checkOtros.addEventListener('change', (e) => {
             const wrapper = document.getElementById('otrosWrapper');
-            if (wrapper) {
-                wrapper.classList.toggle('hidden', !e.target.checked);
-            }
+            if (wrapper) wrapper.classList.toggle('hidden', !e.target.checked);
         });
     }
 });
 
 /* ==========================================
-   DESBLOQUEAR CAMPOS (Para modo entrada)
+   DESBLOQUEAR/BLOQUEAR CAMPOS
    ========================================== */
 function unlockAllFields() {
-    // Quitar clase locked-field de todos los inputs
     const inputs = document.querySelectorAll('.locked-field');
     inputs.forEach(el => {
         el.classList.remove('locked-field');
@@ -52,7 +45,6 @@ function unlockAllFields() {
         }
     });
     
-    // Habilitar checkboxes
     const checks = document.querySelectorAll('.locked-check');
     checks.forEach(el => {
         el.disabled = false;
@@ -60,18 +52,11 @@ function unlockAllFields() {
         if (parent) parent.classList.remove('locked-field');
     });
     
-    // Mostrar wrapper de OTROS si es necesario
     const otrosWrapper = document.getElementById('otrosWrapper');
-    if (otrosWrapper) {
-        otrosWrapper.classList.remove('locked-field');
-    }
+    if (otrosWrapper) otrosWrapper.classList.remove('locked-field');
 }
 
-/* ==========================================
-   BLOQUEAR CAMPOS (Para modo salida)
-   ========================================== */
 function lockPersonalFields() {
-    // Bloquear campos personales (menos DNI)
     const tema = document.getElementById('tema');
     const nombre = document.getElementById('nombre');
     const otrosNivel = document.getElementById('otrosNivel');
@@ -80,7 +65,6 @@ function lockPersonalFields() {
     if (nombre) { nombre.classList.add('locked-field'); nombre.value = ''; }
     if (otrosNivel) { otrosNivel.classList.add('locked-field'); otrosNivel.value = ''; }
     
-    // Bloquear checkboxes
     const checks = document.querySelectorAll('input[name="nivel"]');
     checks.forEach(el => {
         el.checked = false;
@@ -89,7 +73,6 @@ function lockPersonalFields() {
         if (parent) parent.classList.add('locked-field');
     });
     
-    // Ocultar wrapper de OTROS
     const otrosWrapper = document.getElementById('otrosWrapper');
     if (otrosWrapper) otrosWrapper.classList.add('hidden');
 }
@@ -107,19 +90,15 @@ function toggleExitMode() {
     const headerBar = document.getElementById('formHeaderBar');
     
     if (isExitMode) {
-        // 🟡 MODO SALIDA: Bloquear campos personales
         lockPersonalFields();
         
-        // Cambiar botón toggle
         if (btnToggle) {
             btnToggle.innerHTML = '<i class="fas fa-times"></i> CANCELAR SALIDA';
-            btnToggle.classList.remove('btn-toggle-exit');
             btnToggle.style.background = 'var(--error)';
             btnToggle.style.color = 'white';
             btnToggle.style.borderColor = 'var(--error)';
         }
         
-        // Cambiar botón submit
         if (submitBtn) {
             submitBtn.classList.add('exit-mode');
             const span = submitBtn.querySelector('span');
@@ -131,19 +110,13 @@ function toggleExitMode() {
             }
         }
         
-        // Cambiar título
         if (formTitle) {
             formTitle.innerHTML = '<i class="fas fa-sign-out-alt"></i> REGISTRO DE SALIDA';
             formTitle.style.color = 'var(--warning)';
         }
-        if (formSubtitle) {
-            formSubtitle.textContent = 'Ingrese solo su DNI para registrar su salida';
-        }
-        if (headerBar) {
-            headerBar.style.background = 'var(--warning)';
-        }
+        if (formSubtitle) formSubtitle.textContent = 'Ingrese solo su DNI para registrar su salida';
+        if (headerBar) headerBar.style.background = 'var(--warning)';
         
-        // Foco en DNI
         const dniInput = document.getElementById('dni');
         if (dniInput) {
             dniInput.value = '';
@@ -152,19 +125,15 @@ function toggleExitMode() {
         }
         
     } else {
-        // 🔵 MODO ENTRADA: Desbloquear todo
         unlockAllFields();
         
-        // Restaurar botón toggle
         if (btnToggle) {
             btnToggle.innerHTML = '<i class="fas fa-sign-out-alt"></i> Cambiar a: REGISTRAR SALIDA';
-            btnToggle.classList.add('btn-toggle-exit');
             btnToggle.style.background = '';
             btnToggle.style.color = '';
             btnToggle.style.borderColor = '';
         }
         
-        // Restaurar botón submit
         if (submitBtn) {
             submitBtn.classList.remove('exit-mode');
             const span = submitBtn.querySelector('span');
@@ -176,19 +145,13 @@ function toggleExitMode() {
             }
         }
         
-        // Restaurar título
         if (formTitle) {
             formTitle.innerHTML = '<i class="fas fa-sign-in-alt"></i> REGISTRO DE ENTRADA';
             formTitle.style.color = 'var(--primary-dark)';
         }
-        if (formSubtitle) {
-            formSubtitle.textContent = 'Complete todos los campos para registrar su ingreso';
-        }
-        if (headerBar) {
-            headerBar.style.background = 'var(--primary)';
-        }
+        if (formSubtitle) formSubtitle.textContent = 'Complete todos los campos para registrar su ingreso';
+        if (headerBar) headerBar.style.background = 'var(--primary)';
         
-        // Limpiar DNI
         const dniInput = document.getElementById('dni');
         if (dniInput) {
             dniInput.value = '';
@@ -198,7 +161,7 @@ function toggleExitMode() {
 }
 
 /* ==========================================
-   CONFIGURAR FORMULARIO
+   FORMULARIO
    ========================================== */
 function setupForm() {
     const form = document.getElementById('attendanceForm');
@@ -208,7 +171,6 @@ function setupForm() {
         e.preventDefault();
         clearErrors();
         
-        // Verificar acceso
         if (!getManualAccess()) {
             showError('El formulario está desactivado por el administrador.');
             return;
@@ -219,7 +181,6 @@ function setupForm() {
         const fechaInput = document.getElementById('fecha');
         const fecha = fechaInput ? fechaInput.value : '';
         
-        // Validar DNI
         if (!dni || dni.length !== 8) {
             showFieldError('dniError', 'Ingrese un DNI válido de 8 dígitos');
             return;
@@ -228,16 +189,14 @@ function setupForm() {
         showLoading(true);
         
         if (isExitMode) {
-            // 🟡 MODO SALIDA: Solo actualizar con DNI
             const existingIndex = allRecords.findIndex(r => r.dni === dni && r.fecha === fecha);
             
             if (existingIndex === -1) {
-                showError('❌ No se encontró registro de entrada para hoy. Primero debe registrar su entrada.');
+                showError('❌ No se encontró registro de entrada para hoy.');
                 showLoading(false);
                 return;
             }
             
-            // Actualizar hora de salida
             allRecords[existingIndex].horaSalida = new Date().toLocaleTimeString('es-PE', { 
                 hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false 
             });
@@ -246,15 +205,13 @@ function setupForm() {
             showSuccess(allRecords[existingIndex], 'salida');
             
         } else {
-            // 🔵 MODO ENTRADA: Validar todos los campos
             if (!validateEntrance()) {
                 showLoading(false);
                 return;
             }
             
-            // Verificar si ya registró entrada hoy
             if (allRecords.some(r => r.dni === dni && r.fecha === fecha)) {
-                showError('⚠️ Ya registró su entrada hoy. Use el botón "Cambiar a REGISTRAR SALIDA" para registrar su salida.');
+                showError('⚠️ Ya registró su entrada hoy. Use el botón "Cambiar a REGISTRAR SALIDA".');
                 showLoading(false);
                 return;
             }
@@ -280,28 +237,20 @@ function setupForm() {
             showSuccess(formData, 'entrada');
         }
         
-        // Enviar a Google Sheets si está configurado
         if (GOOGLE_SCRIPT_URL !== 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI') {
             try {
                 const lastRecord = allRecords[allRecords.length - 1];
                 await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
+                    method: 'POST', mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        action: isExitMode ? 'update' : 'create', 
-                        data: lastRecord 
-                    })
+                    body: JSON.stringify({ action: isExitMode ? 'update' : 'create', data: lastRecord })
                 });
-            } catch (err) {
-                console.error('Error al enviar a Google Sheets:', err);
-            }
+            } catch (err) { console.error('Error:', err); }
         }
         
         showLoading(false);
     });
     
-    // Validación DNI - solo números
     const dniInput = document.getElementById('dni');
     if (dniInput) {
         dniInput.addEventListener('input', (e) => {
@@ -309,7 +258,6 @@ function setupForm() {
         });
     }
     
-    // Validación Nombre - solo letras
     const nombreInput = document.getElementById('nombre');
     if (nombreInput) {
         nombreInput.addEventListener('input', (e) => {
@@ -319,7 +267,7 @@ function setupForm() {
 }
 
 /* ==========================================
-   VALIDACIÓN MODO ENTRADA
+   VALIDACIÓN
    ========================================== */
 function validateEntrance() {
     let isValid = true;
@@ -328,25 +276,10 @@ function validateEntrance() {
     const nombre = document.getElementById('nombre');
     const fecha = document.getElementById('fecha');
     
-    if (!tema || !tema.value.trim()) {
-        showFieldError('temaError', 'El tema es obligatorio');
-        isValid = false;
-    }
-    
-    if (!nombre || !nombre.value.trim()) {
-        showFieldError('nombreError', 'El nombre es obligatorio');
-        isValid = false;
-    }
-    
-    if (!fecha || !fecha.value) {
-        showFieldError('fechaError', 'La fecha es obligatoria');
-        isValid = false;
-    }
-    
-    if (getSelectedNiveles().length === 0) {
-        showFieldError('nivelError', 'Seleccione al menos un nivel');
-        isValid = false;
-    }
+    if (!tema || !tema.value.trim()) { showFieldError('temaError', 'El tema es obligatorio'); isValid = false; }
+    if (!nombre || !nombre.value.trim()) { showFieldError('nombreError', 'El nombre es obligatorio'); isValid = false; }
+    if (!fecha || !fecha.value) { showFieldError('fechaError', 'La fecha es obligatoria'); isValid = false; }
+    if (getSelectedNiveles().length === 0) { showFieldError('nivelError', 'Seleccione al menos un nivel'); isValid = false; }
     
     return isValid;
 }
@@ -355,36 +288,23 @@ function validateEntrance() {
    UTILIDADES
    ========================================== */
 function getSelectedNiveles() {
-    return Array.from(document.querySelectorAll('input[name="nivel"]:checked'))
-        .map(cb => cb.value)
-        .join(', ');
+    return Array.from(document.querySelectorAll('input[name="nivel"]:checked')).map(cb => cb.value).join(', ');
 }
 
-function saveData() {
-    localStorage.setItem('asistencia_db', JSON.stringify(allRecords));
-}
+function saveData() { localStorage.setItem('asistencia_db', JSON.stringify(allRecords)); }
 
 function loadData() {
-    try {
-        allRecords = JSON.parse(localStorage.getItem('asistencia_db')) || [];
-    } catch {
-        allRecords = [];
-    }
+    try { allRecords = JSON.parse(localStorage.getItem('asistencia_db')) || []; }
+    catch { allRecords = []; }
 }
 
 function showFieldError(id, msg) {
     const el = document.getElementById(id);
-    if (el) {
-        el.textContent = msg;
-        el.style.display = 'block';
-    }
+    if (el) { el.textContent = msg; el.style.display = 'block'; }
 }
 
 function clearErrors() {
-    document.querySelectorAll('.error-msg').forEach(el => {
-        el.textContent = '';
-        el.style.display = 'none';
-    });
+    document.querySelectorAll('.error-msg').forEach(el => { el.textContent = ''; el.style.display = 'none'; });
 }
 
 function showSuccess(data, type) {
@@ -392,9 +312,7 @@ function showSuccess(data, type) {
     document.getElementById('successCard').classList.remove('hidden');
     
     const title = type === 'entrada' ? '✅ Entrada Registrada' : '✅ Salida Registrada';
-    const message = type === 'entrada' 
-        ? 'Su hora de entrada ha sido registrada correctamente.' 
-        : 'Su hora de salida ha sido actualizada correctamente.';
+    const message = type === 'entrada' ? 'Su hora de entrada ha sido registrada correctamente.' : 'Su hora de salida ha sido actualizada correctamente.';
     
     document.querySelector('#successCard h3').textContent = title;
     document.getElementById('successMessage').textContent = message;
@@ -426,39 +344,30 @@ function resetForms() {
     document.getElementById('errorCard').classList.add('hidden');
     document.getElementById('formCard').classList.remove('hidden');
     
-    // Si está en modo salida, volver a entrada
-    if (isExitMode) {
-        toggleExitMode();
-    }
+    if (isExitMode) toggleExitMode();
     
-    // Restaurar fecha
     const today = new Date().toISOString().split('T')[0];
     const fechaInput = document.getElementById('fecha');
-    if (fechaInput) {
-        fechaInput.value = today;
-    }
+    if (fechaInput) fechaInput.value = today;
     
-    // Desbloquear campos
     unlockAllFields();
     clearErrors();
     
-    // Ocultar wrapper de OTROS
     const otrosWrapper = document.getElementById('otrosWrapper');
     if (otrosWrapper) otrosWrapper.classList.add('hidden');
 }
 
 function showLoading(show) {
     const overlay = document.getElementById('loadingOverlay');
-    if (overlay) {
-        overlay.classList.toggle('hidden', !show);
-    }
+    if (overlay) overlay.classList.toggle('hidden', !show);
 }
 
 /* ==========================================
-   CONTROL DE ACCESO
+   ✅ CONTROL DE ACCESO - CORREGIDO
    ========================================== */
 function getManualAccess() {
-    return localStorage.getItem('form_enabled') !== 'false';
+    const access = localStorage.getItem('form_enabled');
+    return access !== 'false'; // Por defecto: ACTIVO
 }
 
 function checkFormAccess() {
@@ -475,18 +384,38 @@ function checkFormAccess() {
     if (btnSubmit) btnSubmit.disabled = !finalState;
     if (btnToggle) btnToggle.disabled = !finalState;
     
+    // ✅ Actualizar indicador visual en el admin
     const statusEl = document.getElementById('accessStatus');
+    const toggleEl = document.getElementById('formAccessToggle');
+    
     if (statusEl) {
-        statusEl.textContent = finalState ? '🟢 ACTIVO' : '🔴 BLOQUEADO';
-        statusEl.style.color = finalState ? 'var(--success)' : 'var(--error)';
+        if (finalState) {
+            statusEl.textContent = '🟢 ACTIVO';
+            statusEl.className = 'access-status active';
+        } else {
+            statusEl.textContent = '🔴 BLOQUEADO';
+            statusEl.className = 'access-status inactive';
+        }
+    }
+    
+    if (toggleEl) {
+        toggleEl.checked = finalState;
     }
 }
 
 function toggleFormAccess() {
     const check = document.getElementById('formAccessToggle');
     if (check) {
-        localStorage.setItem('form_enabled', check.checked);
-        checkFormAccess();
+        const newState = check.checked;
+        localStorage.setItem('form_enabled', newState);
+        checkFormAccess(); // ✅ Actualizar inmediatamente
+        
+        // Mostrar alerta
+        if (newState) {
+            alert('✅ Formulario ACTIVADO - Los docentes pueden registrar');
+        } else {
+            alert('🔒 Formulario BLOQUEADO - Los docentes NO pueden registrar');
+        }
     }
 }
 
@@ -548,15 +477,17 @@ function loadRecordsForAdmin() {
     const today = new Date().toISOString().split('T')[0];
     const hoyEl = document.getElementById('totalHoy');
     if (hoyEl) hoyEl.textContent = allRecords.filter(r => r.fecha === today).length;
+    
+    // ✅ Actualizar estado del toggle al abrir admin
+    const toggleEl = document.getElementById('formAccessToggle');
+    if (toggleEl) {
+        toggleEl.checked = getManualAccess();
+    }
+    checkFormAccess();
 }
 
-function closeLoginModal() {
-    document.getElementById('loginModal').classList.add('hidden');
-}
-
-function closeAdminPanel() {
-    document.getElementById('adminPanel').classList.add('hidden');
-}
+function closeLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
+function closeAdminPanel() { document.getElementById('adminPanel').classList.add('hidden'); }
 
 function togglePassword() {
     const p = document.getElementById('adminPass');
@@ -594,33 +525,19 @@ function formatDateDisplay(dateStr) {
     return `${day}/${month}/${year}`;
 }
 
-// Event Listeners Admin
+// Event Listeners
 const adminToggle = document.getElementById('adminToggle');
-if (adminToggle) {
-    adminToggle.addEventListener('click', () => {
-        document.getElementById('loginModal').classList.remove('hidden');
-    });
-}
+if (adminToggle) adminToggle.addEventListener('click', () => document.getElementById('loginModal').classList.remove('hidden'));
 
 const filterDate = document.getElementById('filterDate');
 if (filterDate) {
     filterDate.addEventListener('change', () => {
         const date = filterDate.value;
         const filtered = date ? allRecords.filter(r => r.fecha === date) : allRecords;
-        
         const tbody = document.getElementById('recordsBody');
         if (tbody) {
             tbody.innerHTML = filtered.map((r, i) => `
-                <tr>
-                    <td>${i+1}</td>
-                    <td>${formatDateDisplay(r.fecha)}</td>
-                    <td>${r.horaEntrada}</td>
-                    <td>${r.horaSalida || '-'}</td>
-                    <td>${r.tema}</td>
-                    <td>${r.nombre}</td>
-                    <td>${r.dni}</td>
-                    <td>${r.nivel}</td>
-                </tr>
+                <tr><td>${i+1}</td><td>${formatDateDisplay(r.fecha)}</td><td>${r.horaEntrada}</td><td>${r.horaSalida || '-'}</td><td>${r.tema}</td><td>${r.nombre}</td><td>${r.dni}</td><td>${r.nivel}</td></tr>
             `).join('');
         }
     });
@@ -631,34 +548,16 @@ if (searchInput) {
     searchInput.addEventListener('input', () => {
         const txt = searchInput.value.toLowerCase();
         const filtered = allRecords.filter(r => 
-            r.nombre.toLowerCase().includes(txt) || 
-            r.dni.includes(txt) ||
-            (r.tema && r.tema.toLowerCase().includes(txt))
+            r.nombre.toLowerCase().includes(txt) || r.dni.includes(txt) || (r.tema && r.tema.toLowerCase().includes(txt))
         );
-        
         const tbody = document.getElementById('recordsBody');
         if (tbody) {
             tbody.innerHTML = filtered.map((r, i) => `
-                <tr>
-                    <td>${i+1}</td>
-                    <td>${formatDateDisplay(r.fecha)}</td>
-                    <td>${r.horaEntrada}</td>
-                    <td>${r.horaSalida || '-'}</td>
-                    <td>${r.tema}</td>
-                    <td>${r.nombre}</td>
-                    <td>${r.dni}</td>
-                    <td>${r.nivel}</td>
-                </tr>
+                <tr><td>${i+1}</td><td>${formatDateDisplay(r.fecha)}</td><td>${r.horaEntrada}</td><td>${r.horaSalida || '-'}</td><td>${r.tema}</td><td>${r.nombre}</td><td>${r.dni}</td><td>${r.nivel}</td></tr>
             `).join('');
         }
     });
 }
 
-// Cerrar modales al hacer clic fuera
-document.getElementById('loginModal')?.addEventListener('click', (e) => {
-    if (e.target.id === 'loginModal') closeLoginModal();
-});
-
-document.getElementById('adminPanel')?.addEventListener('click', (e) => {
-    if (e.target.id === 'adminPanel') closeAdminPanel();
-});
+document.getElementById('loginModal')?.addEventListener('click', (e) => { if (e.target.id === 'loginModal') closeLoginModal(); });
+document.getElementById('adminPanel')?.addEventListener('click', (e) => { if (e.target.id === 'adminPanel') closeAdminPanel(); });
