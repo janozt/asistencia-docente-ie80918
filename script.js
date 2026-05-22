@@ -10,7 +10,7 @@ let allRecords = [];
 INICIALIZACIÓN
 ========================================== */
 document.addEventListener('DOMContentLoaded', () => {
-    loadData(); // ✅ CARGA INICIAL DE DATOS (FALTABA)
+    loadData(); // ✅ Carga datos guardados al iniciar
     
     const today = new Date().toISOString().split('T')[0];
     const fechaInput = document.getElementById('fecha');
@@ -40,8 +40,7 @@ function checkSystemStatus() {
     const manualActive = getManualAccess();
     const now = new Date();
     const currentTotalMinutes = (now.getHours() * 60) + now.getMinutes();
-    // 8:00 AM (480 min) a 5:30 PM (1050 min)
-    const isTimeOk = currentTotalMinutes >= 480 && currentTotalMinutes < 1050;
+    const isTimeOk = currentTotalMinutes >= 480 && currentTotalMinutes < 1050; // 8:00 AM - 5:30 PM
 
     const systemActive = manualActive || isTimeOk;
 
@@ -119,8 +118,7 @@ function toggleFormAccess() {
         const newState = check.checked;
         localStorage.setItem('form_enabled', newState);
         checkSystemStatus();
-        if (newState) alert('✅ Asistencia ACTIVADA manualmente.\n\nEl sistema está abierto independientemente del horario.');
-        else alert('🔒 Control MANUAL DESACTIVADO.\n\nEl sistema volverá a regirse por el horario automático (8:00 a.m. - 5:30 p.m.).');
+        alert(newState ? '✅ Asistencia ACTIVADA manualmente.\n\nEl sistema está abierto independientemente del horario.' : '🔒 Control MANUAL DESACTIVADO.\n\nEl sistema volverá a regirse por el horario automático (8:00 a.m. - 5:30 p.m.).');
     }
 }
 
@@ -159,7 +157,7 @@ function unlockAllFields() {
 }
 
 /* ==========================================
-CAMBIAR MODO ENTRADA/SALIDA
+CAMBIAR MODO ENTRADA/SALIDA (✅ CORREGIDO)
 ========================================== */
 function toggleExitMode() {
     isExitMode = !isExitMode;
@@ -172,31 +170,62 @@ function toggleExitMode() {
 
     if (isExitMode) {
         lockPersonalFields();
-        if (btnToggle) { btnToggle.innerHTML = '<i class="fas fa-times"></i> CANCELAR SALIDA'; btnToggle.style.background = 'var(--error)'; btnToggle.style.color = 'white'; btnToggle.style.borderColor = 'var(--error)'; }
-        if (submitBtn) { submitBtn.classList.add('exit-mode'); submitBtn.querySelector('span').textContent = 'REGISTRAR SALIDA'; submitBtn.querySelector('i').className = 'fas fa-sign-out-alt'; }
-        if (formTitle) { formTitle.innerHTML = '<i class="fas fa-sign-out-alt"></i> REGISTRO DE SALIDA'; formTitle.style.color = 'var(--warning)'; }
+        if (btnToggle) { 
+            btnToggle.innerHTML = '<i class="fas fa-times"></i> CANCELAR SALIDA'; 
+            btnToggle.style.background = 'var(--error)'; 
+            btnToggle.style.color = 'white'; 
+            btnToggle.style.borderColor = 'var(--error)'; 
+        }
+        if (submitBtn) { 
+            submitBtn.classList.add('exit-mode'); 
+            submitBtn.querySelector('span').textContent = 'REGISTRAR SALIDA'; 
+            submitBtn.querySelector('i').className = 'fas fa-sign-out-alt'; 
+        }
+        if (formTitle) { 
+            formTitle.innerHTML = '<i class="fas fa-sign-out-alt"></i> REGISTRO DE SALIDA'; 
+            formTitle.style.color = 'var(--warning)'; 
+        }
         if (formSubtitle) formSubtitle.textContent = 'Ingrese solo su DNI para registrar su salida';
         if (headerBar) headerBar.style.background = 'var(--warning)';
         if (dniInfo) dniInfo.innerHTML = '<i class="fas fa-info-circle"></i> El sistema buscará su registro de entrada y agregará la hora de salida';
         
         const dniInput = document.getElementById('dni');
-        if (dniInput) { dniInput.value = ''; dniInput.focus(); dniInput.placeholder = 'Ingrese su DNI para registrar salida'; }
+        if (dniInput) { 
+            dniInput.value = ''; 
+            dniInput.focus(); 
+            dniInput.placeholder = 'Ingrese su DNI para registrar salida'; 
+        }
     } else {
         unlockAllFields();
-        if (btnToggle) { btnToggle.innerHTML = '<i class="fas fa-sign-out-alt"></i> Cambiar a: REGISTRAR SALIDA'; btnToggle.style.background = ''; btnToggle.style.color = ''; btnToggle.style.borderColor = ''; }
-        if (submitBtn) { submitBtn.classList.remove('exit-mode'); submitBtn.querySelector('span').textContent = 'REGISTRAR ENTRADA'; submitBtn.querySelector('i').className = 'fas fa-paper-plane'; }
-        if (formTitle) { formTitle.innerHTML = '<i class="fas fa-sign-in-alt"></i> REGISTRO DE ENTRADA'; formTitle.style.color = 'var(--primary-dark)'; }
+        if (btnToggle) { 
+            btnToggle.innerHTML = '<i class="fas fa-sign-out-alt"></i> Cambiar a: REGISTRAR SALIDA'; 
+            btnToggle.style.background = ''; 
+            btnToggle.style.color = ''; 
+            btnToggle.style.borderColor = ''; 
+        }
+        if (submitBtn) { 
+            submitBtn.classList.remove('exit-mode'); 
+            submitBtn.querySelector('span').textContent = 'REGISTRAR ENTRADA'; 
+            submitBtn.querySelector('i').className = 'fas fa-paper-plane'; 
+        }
+        if (formTitle) { 
+            formTitle.innerHTML = '<i class="fas fa-sign-in-alt"></i> REGISTRO DE ENTRADA'; 
+            formTitle.style.color = 'var(--primary-dark)'; 
+        }
         if (formSubtitle) formSubtitle.textContent = 'Complete todos los campos para registrar su ingreso';
         if (headerBar) headerBar.style.background = 'var(--primary)';
         if (dniInfo) dniInfo.innerHTML = '<i class="fas fa-info-circle"></i> El DNI se usa para crear o actualizar su registro';
         
         const dniInput = document.getElementById('dni');
-        if (dniInput) { dniInput.value = ''; dniInput.placeholder = 'Ingrese su DNI para registrar'; }
+        if (dniInput) { 
+            dniInput.value = ''; 
+            dniInput.placeholder = 'Ingrese su DNI para registrar'; 
+        }
     }
 }
 
 /* ==========================================
-FORMULARIO
+FORMULARIO (✅ LÓGICA DE SALIDA CORREGIDA)
 ========================================== */
 function setupForm() {
     const form = document.getElementById('attendanceForm');
@@ -221,23 +250,47 @@ function setupForm() {
         const fechaInput = document.getElementById('fecha');
         const fecha = fechaInput ? fechaInput.value : '';
         
-        if (!dni || dni.length !== 8) { showFieldError('dniError', 'Ingrese un DNI válido de 8 dígitos'); return; }
+        if (!dni || dni.length !== 8) { 
+            showFieldError('dniError', 'Ingrese un DNI válido de 8 dígitos'); 
+            return; 
+        }
         
         showLoading(true);
         
         try {
             if (isExitMode) {
+                // ✅ BUSCAR REGISTRO DE ENTRADA EXISTENTE
                 const existingIndex = allRecords.findIndex(r => r.dni === dni && r.fecha === fecha);
-                if (existingIndex === -1) { showError('❌ No se encontró registro de entrada para hoy.<br><br>Primero debe registrar su entrada.'); showLoading(false); return; }
-                if (allRecords[existingIndex].horaSalida) { showError('⚠️ Ya registró su salida hoy a las <strong>' + allRecords[existingIndex].horaSalida + '</strong>.<br><br>No puede registrar su salida dos veces en el mismo día.'); showLoading(false); return; }
                 
+                if (existingIndex === -1) { 
+                    showError('❌ No se encontró registro de entrada para hoy.<br><br>Primero debe registrar su entrada.'); 
+                    showLoading(false); 
+                    return; 
+                }
+                if (allRecords[existingIndex].horaSalida) { 
+                    showError('⚠️ Ya registró su salida hoy a las <strong>' + allRecords[existingIndex].horaSalida + '</strong>.<br><br>No puede registrar su salida dos veces en el mismo día.'); 
+                    showLoading(false); 
+                    return; 
+                }
+                
+                // ✅ ACTUALIZAR HORA DE SALIDA
                 allRecords[existingIndex].horaSalida = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
                 saveData();
                 showSuccess(allRecords[existingIndex], 'salida');
+                
             } else {
+                // ✅ VALIDAR DUPLICADO DE ENTRADA
                 const existingRecord = allRecords.find(r => r.dni === dni && r.fecha === fecha);
-                if (existingRecord) { showError('⚠️ Ya registró su entrada hoy a las <strong>' + existingRecord.horaEntrada + '</strong>.<br><br>Si necesita registrar su salida, use el botón "Cambiar a: REGISTRAR SALIDA".'); showLoading(false); return; }
-                if (!validateEntrance()) { showLoading(false); return; }
+                if (existingRecord) { 
+                    showError('⚠️ Ya registró su entrada hoy a las <strong>' + existingRecord.horaEntrada + '</strong>.<br><br>Si necesita registrar su salida, use el botón "Cambiar a: REGISTRAR SALIDA".'); 
+                    showLoading(false); 
+                    return; 
+                }
+                
+                if (!validateEntrance()) { 
+                    showLoading(false); 
+                    return; 
+                }
                 
                 const temaInput = document.getElementById('tema');
                 const nombreInput = document.getElementById('nombre');
@@ -258,6 +311,7 @@ function setupForm() {
                 showSuccess(formData, 'entrada');
             }
 
+            // ✅ SYNC CON BACKEND (OPCIONAL)
             if (GOOGLE_SCRIPT_URL !== 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI') {
                 try {
                     const lastRecord = allRecords[allRecords.length - 1];
@@ -421,10 +475,8 @@ function togglePassword() {
 }
 
 /* ==========================================
-✅ REPORTES CORREGIDOS
+REPORTES (EXCEL E IMPRESIÓN CORREGIDOS)
 ========================================== */
-
-// Exportación Excel Profesional (Formato Tabla HTML compatible con Excel)
 function downloadExcel() {
     loadData();
     let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><style>table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;}th,td{border:1px solid #b0b0b0;padding:10px 8px;text-align:left;font-size:11px;}th{background:#2563eb;color:#ffffff;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;}tr:nth-child(even){background:#f8f9fa;}td{mso-number-format:"\\@";}</style></head><body><h2 style="text-align:center;color:#1e40af;margin-bottom:10px;">📊 Reporte de Asistencia Docente</h2><p style="text-align:center;color:#666;font-size:12px;margin-top:0;">Generado: '+new Date().toLocaleString('es-PE')+' | Total: '+allRecords.length+' registros</p><table><tr><th>Fecha</th><th>Hora Entrada</th><th>Hora Salida</th><th>Nombre del Docente</th><th>Curso o Área</th><th>Tema Tratado</th><th>Estado de Asistencia</th></tr>';
@@ -447,7 +499,6 @@ function downloadExcel() {
     URL.revokeObjectURL(link.href);
 }
 
-// Impresión Limpia y Ordenada
 function printReport() {
     loadData();
     const printWindow = window.open('', '_blank');
