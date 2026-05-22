@@ -1,7 +1,7 @@
 /* ==========================================
 CONFIGURACIÓN
 ========================================== */
-const GOOGLE_SCRIPT_URL = 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7DznTA_q71b_nyl6EYuDLz99xG45ZRwziThe0FRm8FXgQzAsAuoNBMZNPiKDVqZzc/exec';
 const ADMIN_CREDENTIALS = { username: 'admin', password: 'admin2026' };
 let isExitMode = false;
 let allRecords = [];
@@ -10,17 +10,21 @@ let allRecords = [];
 INICIALIZACIÓN
 ========================================== */
 document.addEventListener('DOMContentLoaded', () => {
+    // ✅ CORRECCIÓN CRÍTICA: Cargar datos existentes al iniciar
+    loadData();
+    
     const today = new Date().toISOString().split('T')[0];
     const fechaInput = document.getElementById('fecha');
     if (fechaInput) {
         fechaInput.value = today;
         fechaInput.min = today;
     }
+    
     unlockAllFields();
     checkSystemStatus();
     setupForm();
     setupLogin();
-
+    
     const checkOtros = document.getElementById('checkOtros');
     if (checkOtros) {
         checkOtros.addEventListener('change', (e) => {
@@ -37,11 +41,10 @@ function checkSystemStatus() {
     const manualActive = getManualAccess();
     const now = new Date();
     const currentTotalMinutes = (now.getHours() * 60) + now.getMinutes();
-    
     // 8:00 AM (480 min) a 5:30 PM (1050 min)
     const isTimeOk = currentTotalMinutes >= 480 && currentTotalMinutes < 1050;
 
-    // ✅ NUEVA LÓGICA DE PRIORIDAD: Si está activado manualmente, IGNORA el horario
+    // ✅ PRIORIDAD: Si está activado manualmente, IGNORA el horario
     const systemActive = manualActive || isTimeOk;
 
     const btnSubmit = document.getElementById('btnSubmit');
@@ -57,7 +60,6 @@ function checkSystemStatus() {
         showClosedMessage(!manualActive, !isTimeOk);
     }
 
-    // Actualizar indicador visual con los 3 estados posibles
     updateAccessIndicator(manualActive, isTimeOk);
 }
 
@@ -65,9 +67,8 @@ function showClosedMessage(isAdminDisabled, isTimeDisabled) {
     document.getElementById('formCard').classList.add('hidden');
     document.getElementById('closedCard').classList.remove('hidden');
     const messageEl = document.getElementById('closedMessage');
-
     if (isTimeDisabled && !isAdminDisabled) {
-        messageEl.innerHTML = '⏰ <strong>Fuera del Horario de Atención</strong><br>El sistema solo está disponible de 8:00 a.m. a 6:30 p.m.<br><em>O active el control manual desde el panel de administración.</em>';
+        messageEl.innerHTML = '⏰ <strong>Fuera del Horario de Atención</strong><br>El sistema solo está disponible de 8:00 a.m. a 5:30 p.m.<br><em>O active el control manual desde el panel de administración.</em>';
     } else {
         messageEl.innerHTML = '🔒 <strong>Sistema Desactivado</strong><br>El administrador ha desactivado temporalmente el registro.';
     }
@@ -82,14 +83,13 @@ function hideClosedMessage() {
 CONTROL DE ACCESO MANUAL
 ========================================== */
 function getManualAccess() {
-    // Por defecto DESACTIVADO (false) para respetar el horario automático inicialmente
     return localStorage.getItem('form_enabled') === 'true';
 }
 
 function updateAccessIndicator(manualActive, isTimeOk) {
     const statusEl = document.getElementById('accessStatus');
     const toggleEl = document.getElementById('formAccessToggle');
-
+    
     if (statusEl) {
         if (manualActive) {
             statusEl.innerHTML = '<i class="fas fa-circle"></i> HABILITADO MANUALMENTE';
@@ -123,7 +123,6 @@ function toggleFormAccess() {
         const newState = check.checked;
         localStorage.setItem('form_enabled', newState);
         checkSystemStatus();
-        
         if (newState) {
             alert('✅ Asistencia ACTIVADA manualmente.\n\nEl sistema está abierto independientemente del horario.');
         } else {
@@ -138,12 +137,15 @@ BLOQUEAR/DESBLOQUEAR CAMPOS (Entrada/Salida)
 function lockPersonalFields() {
     const container = document.getElementById('personalDataContainer');
     if (container) container.classList.add('hidden-container');
+    
     const tema = document.getElementById('tema');
     const nombre = document.getElementById('nombre');
     const otrosNivel = document.getElementById('otrosNivel');
+    
     if (tema) tema.value = '';
     if (nombre) nombre.value = '';
     if (otrosNivel) otrosNivel.value = '';
+    
     document.querySelectorAll('input[name="nivel"]').forEach(el => el.checked = false);
     const otrosWrapper = document.getElementById('otrosWrapper');
     if (otrosWrapper) otrosWrapper.classList.add('hidden');
@@ -152,8 +154,10 @@ function lockPersonalFields() {
 function unlockAllFields() {
     const container = document.getElementById('personalDataContainer');
     if (container) container.classList.remove('hidden-container');
+    
     const inputs = document.querySelectorAll('#personalDataContainer input');
     inputs.forEach(el => { el.disabled = false; el.readOnly = false; });
+    
     document.querySelectorAll('input[name="nivel"]').forEach(el => {
         el.disabled = false;
         const parent = el.closest('.checkbox-item');
@@ -181,6 +185,7 @@ function toggleExitMode() {
         if (formSubtitle) formSubtitle.textContent = 'Ingrese solo su DNI para registrar su salida';
         if (headerBar) headerBar.style.background = 'var(--warning)';
         if (dniInfo) dniInfo.innerHTML = '<i class="fas fa-info-circle"></i> El sistema buscará su registro de entrada y agregará la hora de salida';
+        
         const dniInput = document.getElementById('dni');
         if (dniInput) { dniInput.value = ''; dniInput.focus(); dniInput.placeholder = 'Ingrese su DNI para registrar salida'; }
     } else {
@@ -191,6 +196,7 @@ function toggleExitMode() {
         if (formSubtitle) formSubtitle.textContent = 'Complete todos los campos para registrar su ingreso';
         if (headerBar) headerBar.style.background = 'var(--primary)';
         if (dniInfo) dniInfo.innerHTML = '<i class="fas fa-info-circle"></i> El DNI se usa para crear o actualizar su registro';
+        
         const dniInput = document.getElementById('dni');
         if (dniInput) { dniInput.value = ''; dniInput.placeholder = 'Ingrese su DNI para registrar'; }
     }
@@ -202,12 +208,12 @@ FORMULARIO
 function setupForm() {
     const form = document.getElementById('attendanceForm');
     if (!form) return;
-    
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         clearErrors();
         
-        // ✅ Validación al enviar con misma prioridad manual
+        // ✅ Validación con prioridad manual
         const manualActive = getManualAccess();
         const currentTotalMinutes = (new Date().getHours() * 60) + new Date().getMinutes();
         const isTimeOk = currentTotalMinutes >= 480 && currentTotalMinutes < 1110;
@@ -227,45 +233,48 @@ function setupForm() {
         
         showLoading(true);
         
-        if (isExitMode) {
-            const existingIndex = allRecords.findIndex(r => r.dni === dni && r.fecha === fecha);
-            if (existingIndex === -1) { showError('❌ No se encontró registro de entrada para hoy.<br><br>Primero debe registrar su entrada.'); showLoading(false); return; }
-            if (allRecords[existingIndex].horaSalida) { showError('⚠️ Ya registró su salida hoy a las <strong>' + allRecords[existingIndex].horaSalida + '</strong>.<br><br>No puede registrar su salida dos veces en el mismo día.'); showLoading(false); return; }
-            
-            allRecords[existingIndex].horaSalida = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-            saveData();
-            showSuccess(allRecords[existingIndex], 'salida');
-        } else {
-            const existingRecord = allRecords.find(r => r.dni === dni && r.fecha === fecha);
-            if (existingRecord) { showError('⚠️ Ya registró su entrada hoy a las <strong>' + existingRecord.horaEntrada + '</strong>.<br><br>Si necesita registrar su salida, use el botón "Cambiar a: REGISTRAR SALIDA".'); showLoading(false); return; }
-            if (!validateEntrance()) { showLoading(false); return; }
-            
-            const temaInput = document.getElementById('tema');
-            const nombreInput = document.getElementById('nombre');
-            
-            const formData = {
-                fecha: fecha,
-                horaEntrada: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
-                horaSalida: '',
-                tema: temaInput ? temaInput.value.trim() : '',
-                nombre: nombreInput ? nombreInput.value.trim() : '',
-                dni: dni,
-                nivel: getSelectedNiveles(),
-                timestamp: new Date().toISOString()
-            };
-            
-            allRecords.push(formData);
-            saveData();
-            showSuccess(formData, 'entrada');
+        try {
+            if (isExitMode) {
+                const existingIndex = allRecords.findIndex(r => r.dni === dni && r.fecha === fecha);
+                if (existingIndex === -1) { showError('❌ No se encontró registro de entrada para hoy.<br><br>Primero debe registrar su entrada.'); showLoading(false); return; }
+                if (allRecords[existingIndex].horaSalida) { showError('⚠️ Ya registró su salida hoy a las <strong>' + allRecords[existingIndex].horaSalida + '</strong>.<br><br>No puede registrar su salida dos veces en el mismo día.'); showLoading(false); return; }
+                
+                allRecords[existingIndex].horaSalida = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+                saveData();
+                showSuccess(allRecords[existingIndex], 'salida');
+            } else {
+                const existingRecord = allRecords.find(r => r.dni === dni && r.fecha === fecha);
+                if (existingRecord) { showError('⚠️ Ya registró su entrada hoy a las <strong>' + existingRecord.horaEntrada + '</strong>.<br><br>Si necesita registrar su salida, use el botón "Cambiar a: REGISTRAR SALIDA".'); showLoading(false); return; }
+                if (!validateEntrance()) { showLoading(false); return; }
+                
+                const temaInput = document.getElementById('tema');
+                const nombreInput = document.getElementById('nombre');
+                
+                const formData = {
+                    fecha: fecha,
+                    horaEntrada: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
+                    horaSalida: '',
+                    tema: temaInput ? temaInput.value.trim() : '',
+                    nombre: nombreInput ? nombreInput.value.trim() : '',
+                    dni: dni,
+                    nivel: getSelectedNiveles(),
+                    timestamp: new Date().toISOString()
+                };
+                
+                allRecords.push(formData);
+                saveData();
+                showSuccess(formData, 'entrada');
+            }
+
+            if (GOOGLE_SCRIPT_URL !== 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI') {
+                try {
+                    const lastRecord = allRecords[allRecords.length - 1];
+                    await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: isExitMode ? 'update' : 'create', data: lastRecord }) });
+                } catch (err) { console.warn('Sync con backend opcional falló:', err); }
+            }
+        } finally {
+            showLoading(false);
         }
-        
-        if (GOOGLE_SCRIPT_URL !== 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI') {
-            try {
-                const lastRecord = allRecords[allRecords.length - 1];
-                await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: isExitMode ? 'update' : 'create', data: lastRecord }) });
-            } catch (err) { console.error('Error:', err); }
-        }
-        showLoading(false);
     });
 
     const dniInput = document.getElementById('dni');
@@ -283,17 +292,37 @@ function validateEntrance() {
     const tema = document.getElementById('tema');
     const nombre = document.getElementById('nombre');
     const fecha = document.getElementById('fecha');
+    
     if (!tema || !tema.value.trim()) { showFieldError('temaError', 'El tema es obligatorio'); isValid = false; }
     if (!nombre || !nombre.value.trim()) { showFieldError('nombreError', 'El nombre es obligatorio'); isValid = false; }
     if (!fecha || !fecha.value) { showFieldError('fechaError', 'La fecha es obligatoria'); isValid = false; }
     if (getSelectedNiveles().length === 0) { showFieldError('nivelError', 'Seleccione al menos un nivel'); isValid = false; }
+    
     return isValid;
 }
+
 function getSelectedNiveles() { return Array.from(document.querySelectorAll('input[name="nivel"]:checked')).map(cb => cb.value).join(', '); }
-function saveData() { localStorage.setItem('asistencia_db', JSON.stringify(allRecords)); }
-function loadData() { try { allRecords = JSON.parse(localStorage.getItem('asistencia_db')) || []; } catch { allRecords = []; } }
+
+// ✅ ALMACENAMIENTO ROBUSTO
+function saveData() { 
+    try {
+        localStorage.setItem('asistencia_db', JSON.stringify(allRecords));
+    } catch (e) {
+        console.error('Error al guardar:', e);
+        alert('⚠️ Memoria local llena. Exporte los datos antes de continuar.');
+    }
+}
+
+function loadData() { 
+    try { 
+        const stored = localStorage.getItem('asistencia_db');
+        allRecords = stored ? JSON.parse(stored) : []; 
+    } catch { allRecords = []; }
+}
+
 function showFieldError(id, msg) { const el = document.getElementById(id); if (el) { el.textContent = msg; el.style.display = 'block'; } }
 function clearErrors() { document.querySelectorAll('.error-msg').forEach(el => { el.textContent = ''; el.style.display = 'none'; }); }
+
 function showSuccess(data, type) {
     document.getElementById('formCard').classList.add('hidden');
     document.getElementById('successCard').classList.remove('hidden');
@@ -305,14 +334,17 @@ function showSuccess(data, type) {
         <p><strong>🏁 Salida:</strong> ${data.horaSalida || 'Pendiente'}</p>
         <p><strong>👤 Docente:</strong> ${data.nombre}</p>
         <p><strong>🆔 DNI:</strong> ${data.dni}</p>
-        <p><strong>📚 Nivel:</strong> ${data.nivel}</p>`;
+        <p><strong>📚 Nivel:</strong> ${data.nivel}</p>
+    `;
 }
+
 function showError(msg) {
     document.getElementById('formCard').classList.add('hidden');
     document.getElementById('errorCard').classList.remove('hidden');
     document.getElementById('errorTitle').textContent = 'Error de Registro';
     document.getElementById('errorMessage').innerHTML = msg;
 }
+
 function resetForms() {
     document.getElementById('attendanceForm').reset();
     document.getElementById('successCard').classList.add('hidden');
@@ -325,6 +357,7 @@ function resetForms() {
     document.getElementById('otrosWrapper').classList.add('hidden');
     checkSystemStatus();
 }
+
 function showLoading(show) { document.getElementById('loadingOverlay').classList.toggle('hidden', !show); }
 
 /* ==========================================
@@ -333,6 +366,7 @@ ADMIN PANEL FUNCIONES
 function setupLogin() {
     const loginForm = document.getElementById('loginForm');
     if (!loginForm) return;
+
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
         if (document.getElementById('adminUser').value === ADMIN_CREDENTIALS.username && document.getElementById('adminPass').value === ADMIN_CREDENTIALS.password) {
@@ -344,56 +378,108 @@ function setupLogin() {
         }
     });
 }
+
 function loadRecordsForAdmin() {
     loadData();
     const tbody = document.getElementById('recordsBody');
     if (!tbody) return;
+    
     tbody.innerHTML = '';
     if (allRecords.length === 0) {
         tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:3rem;color:var(--gray-400)"><i class="fas fa-inbox" style="font-size:3rem;margin-bottom:1rem;display:block;"></i>No hay registros</td></tr>';
         return;
     }
+    
     allRecords.forEach((r, i) => {
-        tbody.innerHTML += `<tr><td>${i+1}</td><td>${formatDateDisplay(r.fecha)}</td><td><strong>${r.horaEntrada}</strong></td><td style="color:${r.horaSalida?'var(--success)':'var(--warning)'};font-weight:${r.horaSalida?'600':'400'}">${r.horaSalida||'<em>Pendiente</em>'}</td><td>${r.tema}</td><td><strong>${r.nombre}</strong></td><td><code style="background:var(--gray-100);padding:0.2rem 0.5rem;border-radius:4px">${r.dni}</code></td><td><span style="background:var(--primary-bg);color:var(--primary);padding:0.3rem 0.6rem;border-radius:50px;font-size:0.85rem;font-weight:600">${r.nivel}</span></td></tr>`;
+        tbody.innerHTML += `
+            <tr>
+                <td>${i+1}</td>
+                <td>${formatDateDisplay(r.fecha)}</td>
+                <td><strong>${r.horaEntrada}</strong></td>
+                <td style="color:${r.horaSalida?'var(--success)':'var(--warning)'};font-weight:${r.horaSalida?'600':'400'}">${r.horaSalida||'<em>Pendiente</em>'}</td>
+                <td>${r.tema}</td>
+                <td><strong>${r.nombre}</strong></td>
+                <td><code style="background:var(--gray-100);padding:0.2rem 0.5rem;border-radius:4px">${r.dni}</code></td>
+                <td><span style="background:var(--primary-bg);color:var(--primary);padding:0.3rem 0.6rem;border-radius:50px;font-size:0.85rem;font-weight:600">${r.nivel}</span></td>
+            </tr>`;
     });
+    
     document.getElementById('totalRegistros').textContent = allRecords.length;
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('totalHoy').textContent = allRecords.filter(r => r.fecha === today).length;
+    
     const niveles = new Set();
     allRecords.forEach(r => r.nivel.split(', ').forEach(n => n && niveles.add(n.trim())));
     document.getElementById('totalNiveles').textContent = niveles.size;
+    
     updateAccessIndicator(getManualAccess(), (new Date().getHours()*60)+new Date().getMinutes() >= 480 && (new Date().getHours()*60)+new Date().getMinutes() < 1110);
 }
+
 function closeLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
 function closeAdminPanel() { document.getElementById('adminPanel').classList.add('hidden'); }
+
 function togglePassword() {
     const p = document.getElementById('adminPass');
     const i = document.getElementById('eyeIcon');
     if (p.type === 'password') { p.type = 'text'; i.classList.replace('fa-eye', 'fa-eye-slash'); }
     else { p.type = 'password'; i.classList.replace('fa-eye-slash', 'fa-eye'); }
 }
+
+// ✅ EXPORTACIÓN ROBUSTA A EXCEL (CSV compatible)
 function downloadExcel() {
     loadData();
-    let csv = '\uFEFFN°,Fecha,Entrada,Salida,Tema,Docente,DNI,Nivel\n';
-    allRecords.forEach((r, i) => csv += `${i+1},${r.fecha},${r.horaEntrada},${r.horaSalida||''},"${r.tema}","${r.nombre}",${r.dni},"${r.nivel}"\n`);
+    let csv = '\uFEFFN°,Fecha,Hora Entrada,Hora Salida,Tema,Docente,DNI,Nivel\n';
+    allRecords.forEach((r, i) => {
+        const tema = `"${(r.tema || '').replace(/"/g, '""')}"`;
+        const nombre = `"${(r.nombre || '').replace(/"/g, '""')}"`;
+        const nivel = `"${(r.nivel || '').replace(/"/g, '""')}"`;
+        csv += `${i+1},${r.fecha},${r.horaEntrada},${r.horaSalida||''},${tema},${nombre},${r.dni},${nivel}\n`;
+    });
+    
     const link = document.createElement('a');
     link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-    link.download = `Asistencia_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `Asistencia_Docente_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
+    URL.revokeObjectURL(link.href);
 }
-function printReport() { window.print(); }
+
+// ✅ IMPRESIÓN OPTIMIZADA
+function printReport() {
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html><head><title>Reporte de Asistencia</title>
+        <style>
+            body{font-family:Arial,sans-serif;padding:20px;}
+            table{width:100%;border-collapse:collapse;font-size:12px;}
+            th,td{border:1px solid #ccc;padding:8px;text-align:left;}
+            th{background:#f3f4f6;}
+            h2{text-align:center;}
+        </style></head><body>
+        <h2>📊 Reporte de Asistencia Docente - I.E. N°80918</h2>
+        <p>Generado: ${new Date().toLocaleString('es-PE')}</p>
+        <table>
+            <thead><tr><th>#</th><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Tema</th><th>Docente</th><th>DNI</th><th>Nivel</th></tr></thead>
+            <tbody>${allRecords.map((r,i) => `<tr><td>${i+1}</td><td>${r.fecha}</td><td>${r.horaEntrada}</td><td>${r.horaSalida||'-'}</td><td>${r.tema}</td><td>${r.nombre}</td><td>${r.dni}</td><td>${r.nivel}</td></tr>`).join('')}</tbody>
+        </table>
+        <script>window.print();window.close();<\/script>
+        </body></html>`);
+}
+
 function formatDateDisplay(dateStr) { if (!dateStr) return ''; const [y,m,d] = dateStr.split('-'); return `${d}/${m}/${y}`; }
+
 function filterRecords() {
     const txt = document.getElementById('searchInput').value.toLowerCase();
     const date = document.getElementById('filterDate').value;
     const filtered = allRecords.filter(r => (!txt || r.nombre.toLowerCase().includes(txt) || r.dni.includes(txt) || (r.tema && r.tema.toLowerCase().includes(txt))) && (!date || r.fecha === date));
     const tbody = document.getElementById('recordsBody');
+    
     if (tbody) {
         if (filtered.length === 0) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:3rem;color:var(--gray-400)">No se encontraron registros</td></tr>';
         else tbody.innerHTML = filtered.map((r, i) => `<tr><td>${i+1}</td><td>${formatDateDisplay(r.fecha)}</td><td>${r.horaEntrada}</td><td>${r.horaSalida||'-'}</td><td>${r.tema}</td><td>${r.nombre}</td><td>${r.dni}</td><td>${r.nivel}</td></tr>`).join('');
         document.getElementById('recordsCount').textContent = `${filtered.length} registro(s) encontrado(s)`;
     }
 }
+
 function resetFilters() { document.getElementById('searchInput').value = ''; document.getElementById('filterDate').value = ''; loadRecordsForAdmin(); }
 
 document.getElementById('adminToggle').addEventListener('click', () => document.getElementById('loginModal').classList.remove('hidden'));
