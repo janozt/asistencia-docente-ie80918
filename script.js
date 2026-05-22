@@ -39,7 +39,7 @@ function checkSystemStatus() {
     const manualActive = getManualAccess();
     const now = new Date();
     const currentTotalMinutes = (now.getHours() * 60) + now.getMinutes();
-    const isTimeOk = currentTotalMinutes >= 480 && currentTotalMinutes < 1050; // 8:00 a 17:30
+    const isTimeOk = currentTotalMinutes >= 480 && currentTotalMinutes < 1050;
     const systemActive = manualActive || isTimeOk;
 
     const btnSubmit = document.getElementById('btnSubmit');
@@ -54,6 +54,7 @@ function checkSystemStatus() {
         if (btnToggle) btnToggle.disabled = true;
         showClosedMessage(!manualActive, !isTimeOk);
     }
+
     updateAccessIndicator(manualActive, isTimeOk);
 }
 
@@ -98,7 +99,10 @@ function updateAccessIndicator(manualActive, isTimeOk) {
             statusEl.className = 'access-status inactive';
         }
     }
-    if (toggleEl) toggleEl.checked = manualActive;
+
+    if (toggleEl) {
+        toggleEl.checked = manualActive;
+    }
 }
 
 function toggleFormAccess() {
@@ -190,7 +194,7 @@ function toggleExitMode() {
             btnToggle.style.color = ''; 
             btnToggle.style.borderColor = ''; 
         }
-        if (submitBtn)  { 
+        if (submitBtn) { 
             submitBtn.classList.remove('exit-mode'); 
             submitBtn.querySelector('span').textContent = 'REGISTRAR ENTRADA'; 
             submitBtn.querySelector('i').className = 'fas fa-paper-plane'; 
@@ -212,7 +216,7 @@ function toggleExitMode() {
 }
 
 /* ==========================================
-FORMULARIO - CORREGIDO Y OPTIMIZADO
+FORMULARIO - CORREGIDO
 ========================================== */
 function setupForm() {
     const form = document.getElementById('attendanceForm');
@@ -259,13 +263,13 @@ function setupForm() {
                     return;
                 }
 
-                // ✅ ACTUALIZAR LOCALMENTE
+                // ✅ ACTUALIZAR HORA DE SALIDA LOCALMENTE
                 allRecords[existingIndex].horaSalida = now.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
                 allRecords[existingIndex].estado = 'Completo';
                 saveData();
                 showSuccess(allRecords[existingIndex], 'salida');
 
-                // 📡 ENVIAR ACTUALIZACIÓN A GOOGLE SHEETS
+                // 📡 ENVIAR A GOOGLE SHEETS
                 if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI')) {
                     try {
                         await fetch(GOOGLE_SCRIPT_URL, {
@@ -307,7 +311,7 @@ function setupForm() {
                 saveData();
                 showSuccess(formData, 'entrada');
 
-                // 📡 ENVIAR NUEVO REGISTRO A GOOGLE SHEETS
+                // 📡 ENVIAR A GOOGLE SHEETS
                 if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI')) {
                     try {
                         await fetch(GOOGLE_SCRIPT_URL, {
