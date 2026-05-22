@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fechaInput.value = today;
         fechaInput.min = today;
     }
+
     unlockAllFields();
     checkSystemStatus();
     setupForm();
@@ -119,9 +120,11 @@ function lockPersonalFields() {
     const tema = document.getElementById('tema');
     const nombre = document.getElementById('nombre');
     const otrosNivel = document.getElementById('otrosNivel');
+
     if (tema) tema.value = '';
     if (nombre) nombre.value = '';
     if (otrosNivel) otrosNivel.value = '';
+
     document.querySelectorAll('input[name="nivel"]').forEach(el => el.checked = false);
     const otrosWrapper = document.getElementById('otrosWrapper');
     if (otrosWrapper) otrosWrapper.classList.add('hidden');
@@ -132,6 +135,7 @@ function unlockAllFields() {
     if (container) container.classList.remove('hidden-container');
     const inputs = document.querySelectorAll('#personalDataContainer input');
     inputs.forEach(el => { el.disabled = false; el.readOnly = false; });
+
     document.querySelectorAll('input[name="nivel"]').forEach(el => {
         el.disabled = false;
         const parent = el.closest('.checkbox-item');
@@ -153,56 +157,56 @@ function toggleExitMode() {
 
     if (isExitMode) {
         lockPersonalFields();
-        if (btnToggle) {
-            btnToggle.innerHTML = '<i class="fas fa-times"></i> CANCELAR SALIDA';
-            btnToggle.style.background = 'var(--error)';
-            btnToggle.style.color = 'white';
-            btnToggle.style.borderColor = 'var(--error)';
+        if (btnToggle) { 
+            btnToggle.innerHTML = '<i class="fas fa-times"></i> CANCELAR SALIDA'; 
+            btnToggle.style.background = 'var(--error)'; 
+            btnToggle.style.color = 'white'; 
+            btnToggle.style.borderColor = 'var(--error)'; 
         }
-        if (submitBtn) {
-            submitBtn.classList.add('exit-mode');
-            submitBtn.querySelector('span').textContent = 'REGISTRAR SALIDA';
-            submitBtn.querySelector('i').className = 'fas fa-sign-out-alt';
+        if (submitBtn) { 
+            submitBtn.classList.add('exit-mode'); 
+            submitBtn.querySelector('span').textContent = 'REGISTRAR SALIDA'; 
+            submitBtn.querySelector('i').className = 'fas fa-sign-out-alt'; 
         }
-        if (formTitle) {
-            formTitle.innerHTML = '<i class="fas fa-sign-out-alt"></i> REGISTRO DE SALIDA';
-            formTitle.style.color = 'var(--warning)';
+        if (formTitle) { 
+            formTitle.innerHTML = '<i class="fas fa-sign-out-alt"></i> REGISTRO DE SALIDA'; 
+            formTitle.style.color = 'var(--warning)'; 
         }
         if (formSubtitle) formSubtitle.textContent = 'Ingrese solo su DNI para registrar su salida';
         if (headerBar) headerBar.style.background = 'var(--warning)';
         if (dniInfo) dniInfo.innerHTML = '<i class="fas fa-info-circle"></i> El sistema buscará su registro de entrada y agregará la hora de salida';
-
+        
         const dniInput = document.getElementById('dni');
-        if (dniInput) {
-            dniInput.value = '';
-            dniInput.focus();
-            dniInput.placeholder = 'Ingrese su DNI para registrar salida';
+        if (dniInput) { 
+            dniInput.value = ''; 
+            dniInput.focus(); 
+            dniInput.placeholder = 'Ingrese su DNI para registrar salida'; 
         }
     } else {
         unlockAllFields();
-        if (btnToggle) {
-            btnToggle.innerHTML = '<i class="fas fa-sign-out-alt"></i> Cambiar a: REGISTRAR SALIDA';
-            btnToggle.style.background = '';
-            btnToggle.style.color = '';
-            btnToggle.style.borderColor = '';
+        if (btnToggle) { 
+            btnToggle.innerHTML = '<i class="fas fa-sign-out-alt"></i> Cambiar a: REGISTRAR SALIDA'; 
+            btnToggle.style.background = ''; 
+            btnToggle.style.color = ''; 
+            btnToggle.style.borderColor = ''; 
         }
-        if (submitBtn) {
-            submitBtn.classList.remove('exit-mode');
-            submitBtn.querySelector('span').textContent = 'REGISTRAR ENTRADA';
-            submitBtn.querySelector('i').className = 'fas fa-paper-plane';
+        if (submitBtn)  { 
+            submitBtn.classList.remove('exit-mode'); 
+            submitBtn.querySelector('span').textContent = 'REGISTRAR ENTRADA'; 
+            submitBtn.querySelector('i').className = 'fas fa-paper-plane'; 
         }
-        if (formTitle) {
-            formTitle.innerHTML = '<i class="fas fa-sign-in-alt"></i> REGISTRO DE ENTRADA';
-            formTitle.style.color = 'var(--primary-dark)';
+        if (formTitle) { 
+            formTitle.innerHTML = '<i class="fas fa-sign-in-alt"></i> REGISTRO DE ENTRADA'; 
+            formTitle.style.color = 'var(--primary-dark)'; 
         }
         if (formSubtitle) formSubtitle.textContent = 'Complete todos los campos para registrar su ingreso';
         if (headerBar) headerBar.style.background = 'var(--primary)';
         if (dniInfo) dniInfo.innerHTML = '<i class="fas fa-info-circle"></i> El DNI se usa para crear o actualizar su registro';
-
+        
         const dniInput = document.getElementById('dni');
-        if (dniInput) {
-            dniInput.value = '';
-            dniInput.placeholder = 'Ingrese su DNI para registrar';
+        if (dniInput) { 
+            dniInput.value = ''; 
+            dniInput.placeholder = 'Ingrese su DNI para registrar'; 
         }
     }
 }
@@ -255,23 +259,22 @@ function setupForm() {
                     return;
                 }
 
-                // ACTUALIZAR LOCALMENTE
+                // ✅ ACTUALIZAR LOCALMENTE
                 allRecords[existingIndex].horaSalida = now.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+                allRecords[existingIndex].estado = 'Completo';
                 saveData();
                 showSuccess(allRecords[existingIndex], 'salida');
 
                 // 📡 ENVIAR ACTUALIZACIÓN A GOOGLE SHEETS
                 if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI')) {
                     try {
-                        const response = await fetch(GOOGLE_SCRIPT_URL, {
+                        await fetch(GOOGLE_SCRIPT_URL, {
                             method: 'POST',
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                             body: JSON.stringify({ action: 'update', data: allRecords[existingIndex] })
                         });
-                        const result = await response.json();
-                        if (result.result !== 'success') console.warn('⚠️ Sincronización de salida fallida:', result.message);
                     } catch (err) {
-                        console.warn('⚠️ Error de red al sincronizar salida:', err);
+                        console.warn('⚠️ Advertencia de sincronización (salida):', err);
                     }
                 }
 
@@ -292,6 +295,7 @@ function setupForm() {
                     fecha: fecha,
                     horaEntrada: now.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
                     horaSalida: '',
+                    estado: 'En Jornada',
                     tema: temaInput ? temaInput.value.trim() : '',
                     nombre: nombreInput ? nombreInput.value.trim() : '',
                     dni: dni,
@@ -306,15 +310,13 @@ function setupForm() {
                 // 📡 ENVIAR NUEVO REGISTRO A GOOGLE SHEETS
                 if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI')) {
                     try {
-                        const response = await fetch(GOOGLE_SCRIPT_URL, {
+                        await fetch(GOOGLE_SCRIPT_URL, {
                             method: 'POST',
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                             body: JSON.stringify({ action: 'create', data: formData })
                         });
-                        const result = await response.json();
-                        if (result.result !== 'success') console.warn('⚠️ Sincronización de entrada fallida:', result.message);
                     } catch (err) {
-                        console.warn('⚠️ Error de red al sincronizar entrada:', err);
+                        console.warn('⚠️ Advertencia de sincronización (entrada):', err);
                     }
                 }
             }
