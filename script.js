@@ -10,7 +10,7 @@ let allRecords = [];
 INICIALIZACIÓN
 ========================================== */
 document.addEventListener('DOMContentLoaded', () => {
-    loadData(); // ✅ Carga datos guardados al iniciar
+    loadData();
     
     const today = new Date().toISOString().split('T')[0];
     const fechaInput = document.getElementById('fecha');
@@ -40,7 +40,7 @@ function checkSystemStatus() {
     const manualActive = getManualAccess();
     const now = new Date();
     const currentTotalMinutes = (now.getHours() * 60) + now.getMinutes();
-    const isTimeOk = currentTotalMinutes >= 480 && currentTotalMinutes < 1050; // 8:00 AM - 5:30 PM
+    const isTimeOk = currentTotalMinutes >= 480 && currentTotalMinutes < 1050;
 
     const systemActive = manualActive || isTimeOk;
 
@@ -97,19 +97,15 @@ function updateAccessIndicator(manualActive, isTimeOk) {
         } else if (isTimeOk) {
             statusEl.innerHTML = '<i class="fas fa-circle"></i> CONTROLADO POR HORARIO';
             statusEl.className = 'access-status active';
-            statusEl.style.background = '';
-            statusEl.style.color = '';
-            statusEl.style.borderColor = '';
         } else {
             statusEl.innerHTML = '<i class="fas fa-circle"></i> BLOQUEADO';
             statusEl.className = 'access-status inactive';
-            statusEl.style.background = '';
-            statusEl.style.color = '';
-            statusEl.style.borderColor = '';
         }
     }
 
-    if (toggleEl) toggleEl.checked = manualActive;
+    if (toggleEl) {
+        toggleEl.checked = manualActive;
+    }
 }
 
 function toggleFormAccess() {
@@ -157,7 +153,7 @@ function unlockAllFields() {
 }
 
 /* ==========================================
-CAMBIAR MODO ENTRADA/SALIDA (✅ CORREGIDO)
+CAMBIAR MODO ENTRADA/SALIDA - CORREGIDO
 ========================================== */
 function toggleExitMode() {
     isExitMode = !isExitMode;
@@ -225,7 +221,7 @@ function toggleExitMode() {
 }
 
 /* ==========================================
-FORMULARIO (✅ LÓGICA DE SALIDA CORREGIDA)
+FORMULARIO - CORREGIDO
 ========================================== */
 function setupForm() {
     const form = document.getElementById('attendanceForm');
@@ -259,7 +255,7 @@ function setupForm() {
         
         try {
             if (isExitMode) {
-                // ✅ BUSCAR REGISTRO DE ENTRADA EXISTENTE
+                // BUSCAR REGISTRO DE ENTRADA
                 const existingIndex = allRecords.findIndex(r => r.dni === dni && r.fecha === fecha);
                 
                 if (existingIndex === -1) { 
@@ -273,13 +269,30 @@ function setupForm() {
                     return; 
                 }
                 
-                // ✅ ACTUALIZAR HORA DE SALIDA
+                // ACTUALIZAR HORA DE SALIDA
                 allRecords[existingIndex].horaSalida = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
                 saveData();
                 showSuccess(allRecords[existingIndex], 'salida');
                 
+                // ENVIAR AL BACKEND
+                if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI') {
+                    try {
+                        await fetch(GOOGLE_SCRIPT_URL, { 
+                            method: 'POST', 
+                            mode: 'no-cors', 
+                            headers: { 'Content-Type': 'application/json' }, 
+                            body: JSON.stringify({ 
+                                action: 'update', 
+                                data: allRecords[existingIndex] 
+                            }) 
+                        });
+                    } catch (err) { 
+                        console.warn('Error al sincronizar salida:', err); 
+                    }
+                }
+                
             } else {
-                // ✅ VALIDAR DUPLICADO DE ENTRADA
+                // VALIDAR DUPLICADO DE ENTRADA
                 const existingRecord = allRecords.find(r => r.dni === dni && r.fecha === fecha);
                 if (existingRecord) { 
                     showError('⚠️ Ya registró su entrada hoy a las <strong>' + existingRecord.horaEntrada + '</strong>.<br><br>Si necesita registrar su salida, use el botón "Cambiar a: REGISTRAR SALIDA".'); 
@@ -309,14 +322,23 @@ function setupForm() {
                 allRecords.push(formData);
                 saveData();
                 showSuccess(formData, 'entrada');
-            }
-
-            // ✅ SYNC CON BACKEND (OPCIONAL)
-            if (GOOGLE_SCRIPT_URL !== 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI') {
-                try {
-                    const lastRecord = allRecords[allRecords.length - 1];
-                    await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: isExitMode ? 'update' : 'create', data: lastRecord }) });
-                } catch (err) { console.warn('Sync con backend opcional falló:', err); }
+                
+                // ENVIAR AL BACKEND
+                if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== 'TU_URL_DE_GOOGLE_APPS_SCRIPT_AQUI') {
+                    try {
+                        await fetch(GOOGLE_SCRIPT_URL, { 
+                            method: 'POST', 
+                            mode: 'no-cors', 
+                            headers: { 'Content-Type': 'application/json' }, 
+                            body: JSON.stringify({ 
+                                action: 'create', 
+                                data: formData 
+                            }) 
+                        });
+                    } catch (err) { 
+                        console.warn('Error al sincronizar entrada:', err); 
+                    }
+                }
             }
         } finally {
             showLoading(false);
@@ -353,7 +375,7 @@ function getSelectedNiveles() {
 
 function saveData() { 
     try { localStorage.setItem('asistencia_db', JSON.stringify(allRecords)); } 
-    catch (e) { console.error('Error al guardar:', e); alert('⚠️ Error de almacenamiento local.'); }
+    catch (e) { console.error('Error al guardar:', e); }
 }
 
 function loadData() { 
@@ -402,7 +424,8 @@ function resetForms() {
     document.getElementById('formCard').classList.remove('hidden');
     if (isExitMode) toggleExitMode();
     document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
-    unlockAllFields(); clearErrors();
+    unlockAllFields(); 
+    clearErrors();
     document.getElementById('otrosWrapper').classList.add('hidden');
     checkSystemStatus();
 }
@@ -462,6 +485,8 @@ function loadRecordsForAdmin() {
     const niveles = new Set();
     allRecords.forEach(r => r.nivel.split(', ').forEach(n => n && niveles.add(n.trim())));
     document.getElementById('totalNiveles').textContent = niveles.size;
+    
+    updateAccessIndicator(getManualAccess(), (new Date().getHours()*60)+new Date().getMinutes() >= 480 && (new Date().getHours()*60)+new Date().getMinutes() < 1110);
 }
 
 function closeLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
@@ -475,7 +500,7 @@ function togglePassword() {
 }
 
 /* ==========================================
-REPORTES (EXCEL E IMPRESIÓN CORREGIDOS)
+REPORTES
 ========================================== */
 function downloadExcel() {
     loadData();
