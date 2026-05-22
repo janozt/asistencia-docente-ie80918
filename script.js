@@ -10,8 +10,7 @@ let allRecords = [];
 INICIALIZACIÓN
 ========================================== */
 document.addEventListener('DOMContentLoaded', () => {
-    // ✅ CORRECCIÓN CRÍTICA: Cargar datos existentes al iniciar
-    loadData();
+    loadData(); // ✅ CARGA INICIAL DE DATOS (FALTABA)
     
     const today = new Date().toISOString().split('T')[0];
     const fechaInput = document.getElementById('fecha');
@@ -44,7 +43,6 @@ function checkSystemStatus() {
     // 8:00 AM (480 min) a 5:30 PM (1050 min)
     const isTimeOk = currentTotalMinutes >= 480 && currentTotalMinutes < 1050;
 
-    // ✅ PRIORIDAD: Si está activado manualmente, IGNORA el horario
     const systemActive = manualActive || isTimeOk;
 
     const btnSubmit = document.getElementById('btnSubmit');
@@ -112,9 +110,7 @@ function updateAccessIndicator(manualActive, isTimeOk) {
         }
     }
 
-    if (toggleEl) {
-        toggleEl.checked = manualActive;
-    }
+    if (toggleEl) toggleEl.checked = manualActive;
 }
 
 function toggleFormAccess() {
@@ -123,16 +119,13 @@ function toggleFormAccess() {
         const newState = check.checked;
         localStorage.setItem('form_enabled', newState);
         checkSystemStatus();
-        if (newState) {
-            alert('✅ Asistencia ACTIVADA manualmente.\n\nEl sistema está abierto independientemente del horario.');
-        } else {
-            alert('🔒 Control MANUAL DESACTIVADO.\n\nEl sistema volverá a regirse por el horario automático (8:00 a.m. - 5:30 p.m.).');
-        }
+        if (newState) alert('✅ Asistencia ACTIVADA manualmente.\n\nEl sistema está abierto independientemente del horario.');
+        else alert('🔒 Control MANUAL DESACTIVADO.\n\nEl sistema volverá a regirse por el horario automático (8:00 a.m. - 5:30 p.m.).');
     }
 }
 
 /* ==========================================
-BLOQUEAR/DESBLOQUEAR CAMPOS (Entrada/Salida)
+BLOQUEAR/DESBLOQUEAR CAMPOS
 ========================================== */
 function lockPersonalFields() {
     const container = document.getElementById('personalDataContainer');
@@ -213,7 +206,6 @@ function setupForm() {
         e.preventDefault();
         clearErrors();
         
-        // ✅ Validación con prioridad manual
         const manualActive = getManualAccess();
         const currentTotalMinutes = (new Date().getHours() * 60) + new Date().getMinutes();
         const isTimeOk = currentTotalMinutes >= 480 && currentTotalMinutes < 1110;
@@ -301,16 +293,13 @@ function validateEntrance() {
     return isValid;
 }
 
-function getSelectedNiveles() { return Array.from(document.querySelectorAll('input[name="nivel"]:checked')).map(cb => cb.value).join(', '); }
+function getSelectedNiveles() { 
+    return Array.from(document.querySelectorAll('input[name="nivel"]:checked')).map(cb => cb.value).join(', '); 
+}
 
-// ✅ ALMACENAMIENTO ROBUSTO
 function saveData() { 
-    try {
-        localStorage.setItem('asistencia_db', JSON.stringify(allRecords));
-    } catch (e) {
-        console.error('Error al guardar:', e);
-        alert('⚠️ Memoria local llena. Exporte los datos antes de continuar.');
-    }
+    try { localStorage.setItem('asistencia_db', JSON.stringify(allRecords)); } 
+    catch (e) { console.error('Error al guardar:', e); alert('⚠️ Error de almacenamiento local.'); }
 }
 
 function loadData() { 
@@ -320,8 +309,14 @@ function loadData() {
     } catch { allRecords = []; }
 }
 
-function showFieldError(id, msg) { const el = document.getElementById(id); if (el) { el.textContent = msg; el.style.display = 'block'; } }
-function clearErrors() { document.querySelectorAll('.error-msg').forEach(el => { el.textContent = ''; el.style.display = 'none'; }); }
+function showFieldError(id, msg) { 
+    const el = document.getElementById(id); 
+    if (el) { el.textContent = msg; el.style.display = 'block'; } 
+}
+
+function clearErrors() { 
+    document.querySelectorAll('.error-msg').forEach(el => { el.textContent = ''; el.style.display = 'none'; }); 
+}
 
 function showSuccess(data, type) {
     document.getElementById('formCard').classList.add('hidden');
@@ -358,7 +353,9 @@ function resetForms() {
     checkSystemStatus();
 }
 
-function showLoading(show) { document.getElementById('loadingOverlay').classList.toggle('hidden', !show); }
+function showLoading(show) { 
+    document.getElementById('loadingOverlay').classList.toggle('hidden', !show); 
+}
 
 /* ==========================================
 ADMIN PANEL FUNCIONES
@@ -411,8 +408,6 @@ function loadRecordsForAdmin() {
     const niveles = new Set();
     allRecords.forEach(r => r.nivel.split(', ').forEach(n => n && niveles.add(n.trim())));
     document.getElementById('totalNiveles').textContent = niveles.size;
-    
-    updateAccessIndicator(getManualAccess(), (new Date().getHours()*60)+new Date().getMinutes() >= 480 && (new Date().getHours()*60)+new Date().getMinutes() < 1110);
 }
 
 function closeLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
@@ -425,44 +420,57 @@ function togglePassword() {
     else { p.type = 'password'; i.classList.replace('fa-eye-slash', 'fa-eye'); }
 }
 
-// ✅ EXPORTACIÓN ROBUSTA A EXCEL (CSV compatible)
+/* ==========================================
+✅ REPORTES CORREGIDOS
+========================================== */
+
+// Exportación Excel Profesional (Formato Tabla HTML compatible con Excel)
 function downloadExcel() {
     loadData();
-    let csv = '\uFEFFN°,Fecha,Hora Entrada,Hora Salida,Tema,Docente,DNI,Nivel\n';
-    allRecords.forEach((r, i) => {
-        const tema = `"${(r.tema || '').replace(/"/g, '""')}"`;
-        const nombre = `"${(r.nombre || '').replace(/"/g, '""')}"`;
-        const nivel = `"${(r.nivel || '').replace(/"/g, '""')}"`;
-        csv += `${i+1},${r.fecha},${r.horaEntrada},${r.horaSalida||''},${tema},${nombre},${r.dni},${nivel}\n`;
+    let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><style>table{border-collapse:collapse;width:100%;font-family:Arial,sans-serif;}th,td{border:1px solid #b0b0b0;padding:10px 8px;text-align:left;font-size:11px;}th{background:#2563eb;color:#ffffff;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;}tr:nth-child(even){background:#f8f9fa;}td{mso-number-format:"\\@";}</style></head><body><h2 style="text-align:center;color:#1e40af;margin-bottom:10px;">📊 Reporte de Asistencia Docente</h2><p style="text-align:center;color:#666;font-size:12px;margin-top:0;">Generado: '+new Date().toLocaleString('es-PE')+' | Total: '+allRecords.length+' registros</p><table><tr><th>Fecha</th><th>Hora Entrada</th><th>Hora Salida</th><th>Nombre del Docente</th><th>Curso o Área</th><th>Tema Tratado</th><th>Estado de Asistencia</th></tr>';
+    
+    allRecords.forEach(r => {
+        const estado = r.horaSalida ? 'Completo' : 'En Jornada';
+        const tema = (r.tema || '').replace(/"/g, '""');
+        const nombre = (r.nombre || '').replace(/"/g, '""');
+        const nivel = (r.nivel || '').replace(/"/g, '""');
+        
+        html += `<tr><td>${r.fecha}</td><td>${r.horaEntrada}</td><td>${r.horaSalida||'-'}</td><td>${nombre}</td><td>${nivel}</td><td>${tema}</td><td style="font-weight:bold;color:${r.horaSalida?'#10b981':'#f59e0b'}">${estado}</td></tr>`;
     });
     
+    html += '</table></body></html>';
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-    link.download = `Asistencia_Docente_${new Date().toISOString().split('T')[0]}.csv`;
+    link.href = URL.createObjectURL(blob);
+    link.download = `Asistencia_Docente_${new Date().toISOString().split('T')[0]}.xls`;
     link.click();
     URL.revokeObjectURL(link.href);
 }
 
-// ✅ IMPRESIÓN OPTIMIZADA
+// Impresión Limpia y Ordenada
 function printReport() {
+    loadData();
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
-        <html><head><title>Reporte de Asistencia</title>
+        <!DOCTYPE html><html><head><title>Reporte de Asistencia</title>
         <style>
-            body{font-family:Arial,sans-serif;padding:20px;}
-            table{width:100%;border-collapse:collapse;font-size:12px;}
-            th,td{border:1px solid #ccc;padding:8px;text-align:left;}
-            th{background:#f3f4f6;}
-            h2{text-align:center;}
+            body{font-family:Arial,sans-serif;padding:20px;color:#333}
+            h2{text-align:center;color:#1e40af;margin-bottom:5px}
+            .info{text-align:center;color:#666;font-size:13px;margin-bottom:20px}
+            table{width:100%;border-collapse:collapse;font-size:12px}
+            th,td{border:1px solid #ccc;padding:8px;text-align:left}
+            th{background:#f3f4f6;font-weight:bold}
+            tr:nth-child(even){background:#fafafa}
+            .completo{color:#10b981;font-weight:bold}
+            .jornada{color:#f59e0b;font-weight:bold}
+            @media print{body{padding:0;margin:10px}table{page-break-inside:auto}tr{page-break-inside:avoid;page-break-after:auto}thead{display:table-header-group}h2,.info{margin-bottom:15px}@page{margin:1cm}}
         </style></head><body>
-        <h2>📊 Reporte de Asistencia Docente - I.E. N°80918</h2>
-        <p>Generado: ${new Date().toLocaleString('es-PE')}</p>
-        <table>
-            <thead><tr><th>#</th><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Tema</th><th>Docente</th><th>DNI</th><th>Nivel</th></tr></thead>
-            <tbody>${allRecords.map((r,i) => `<tr><td>${i+1}</td><td>${r.fecha}</td><td>${r.horaEntrada}</td><td>${r.horaSalida||'-'}</td><td>${r.tema}</td><td>${r.nombre}</td><td>${r.dni}</td><td>${r.nivel}</td></tr>`).join('')}</tbody>
-        </table>
-        <script>window.print();window.close();<\/script>
-        </body></html>`);
+        <h2>📊 Control de Asistencia Docente</h2>
+        <p class="info">Generado: ${new Date().toLocaleString('es-PE')} | Total: ${allRecords.length}</p>
+        <table><thead><tr><th>#</th><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Docente</th><th>Nivel</th><th>Tema</th><th>Estado</th></tr></thead>
+        <tbody>${allRecords.map((r,i)=>`<tr><td>${i+1}</td><td>${r.fecha}</td><td>${r.horaEntrada}</td><td>${r.horaSalida||'-'}</td><td>${r.nombre}</td><td>${r.nivel}</td><td>${r.tema}</td><td class="${r.horaSalida?'completo':'jornada'}">${r.horaSalida?'Completo':'En Jornada'}</td></tr>`).join('')}</tbody></table>
+        <script>window.onload=function(){window.print();window.close()}<\/script></body></html>
+    `);
 }
 
 function formatDateDisplay(dateStr) { if (!dateStr) return ''; const [y,m,d] = dateStr.split('-'); return `${d}/${m}/${y}`; }
